@@ -18,6 +18,67 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 _dns_queue = queue.Queue()
 _dns_cache = {}
 
+_arp_table = {}   # { ip: mac } — bảng ARP đã biết
+
+def _check_arp_spoofing(analyzed):
+    """
+    Phát hiện ARP Spoofing bằng cách theo dõi
+    sự thay đổi bất thường của IP → MAC mapping.
+    """
+    global _arp_table
+
+    transport = analyzed.get("transport", {})
+
+    # Chỉ xử lý ARP Reply (op = "Reply")
+    # ARP Request là bình thường, Reply mới là lúc cập nhật ARP cache
+    if analyzed.get("transport_proto") != "ARP":
+        return
+    if transport.get("op") != "Reply":
+        return
+
+    src_ip  = transport.get("src_ip")
+    src_mac = transport.get("src_mac")
+
+    if not src_ip or not src_mac:
+        return
+
+    # Bỏ qua địa chỉ broadcast
+    if src_ip == "0.0.0.0" or src_mac == "ff:ff:ff:ff:ff:ff":
+        return
+
+    if src_ip in _arp_table:
+        known_mac = _arp_table[src_ip]
+
+        if known_mac != src_mac:
+            # ── PHÁT HIỆN ARP SPOOFING ──────────────────────────
+            message = (
+                f"ARP Spoofing detected! "
+                f"IP {src_ip} đổi MAC: "
+                f"{known_mac} → {src_mac}"
+            )
+            print(f"[🚨 ALERT] {message}")
+
+            # Lưu alert vào DB
+            db.save_alert(
+                alert_type="ARP_SPOOFING",
+                message=message,
+                src_ip=src_ip,
+                session_id=_current_session_id
+            )
+
+            # Emit lên frontend ngay lập tức
+            socketio.emit("arp_alert", {
+                "type":      "ARP_SPOOFING",
+                "ip":        src_ip,
+                "old_mac":   known_mac,
+                "new_mac":   src_mac,
+                "message":   message,
+                "time":      analyzed.get("time")
+            })
+    else:
+        # Lần đầu thấy IP này → ghi nhớ
+        _arp_table[src_ip] = src_mac
+
 def _dns_worker():
     while True:
         try:
@@ -70,6 +131,8 @@ def process_packet(raw_bytes):
     dst_ip = ip.get("dst_ip", "")
     if src_ip.startswith("127.") or dst_ip.startswith("127."):
         return
+    
+    _check_arp_spoofing(analyzed)
     # ──────────────────────────────────────────────────────────────
 
     packet_id = db.save_packet(analyzed, session_id=_current_session_id)
@@ -165,8 +228,8 @@ def upload_pcap():
 
     file = request.files["file"]
 
-    if not file.filename.endswith(".pcap"):
-        return jsonify({"error": "Chỉ hỗ trợ file .pcap"}), 400
+    if not file.filename.endswith(('.pcap', '.pcapng')):
+        return jsonify({"error": "Chỉ hỗ trợ file .pcap hoặc .pcapng"}), 400
 
     # Lưu file tạm
     filename  = secure_filename(file.filename)
@@ -244,8 +307,8 @@ def replay_pcap():
     file = request.files["file"]
     speed = float(request.form.get("speed", 1.0))
 
-    if not file.filename.endswith(".pcap"):
-        return jsonify({"error": "Chỉ hỗ trợ file .pcap"}), 400
+    if not file.filename.endswith(('.pcap', '.pcapng')):
+        return jsonify({"error": "Chỉ hỗ trợ file .pcap hoặc .pcapng"}), 400
 
     filename = secure_filename(file.filename)
     filepath = os.path.join(UPLOAD_FOLDER, filename)

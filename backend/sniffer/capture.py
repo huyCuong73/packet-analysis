@@ -50,6 +50,9 @@ class PacketCapture:
             print(f"[!] Lỗi liệt kê interfaces: {e}")
             return []
 
+    
+
+
     @staticmethod
     def _get_iface_ip(iface_name):
         """Lấy IP address của interface bằng ioctl"""
@@ -147,7 +150,51 @@ class PacketCapture:
         self.is_running = False
 
     # ─── 3. Đọc file PCAP ─────────────────────────────────────────────
+    @staticmethod
+    def load_from_pcap(filepath, callback=None) -> list:
+        """
+        Đọc file .pcap hoặc .pcapng
+        - .pcap  → tự parse bằng struct (Python thuần)
+        - .pcapng → dùng dpkt
+        """
+        if not os.path.exists(filepath):
+            print(f"[!] Không tìm thấy file: {filepath}")
+            return []
 
+        # Phân biệt pcap vs pcapng bằng magic number
+        with open(filepath, 'rb') as f:
+            magic = f.read(4)
+
+        # pcapng magic: 0x0A0D0D0A
+        if magic == b'\x0a\x0d\x0d\x0a':
+            return PacketCapture._load_pcapng(filepath, callback)
+        else:
+            return PacketCapture._load_pcap(filepath, callback)
+
+    @staticmethod
+    def _load_pcapng(filepath, callback=None) -> list:
+        """Đọc file .pcapng bằng dpkt"""
+        try:
+            import dpkt
+        except ImportError:
+            print("[!] Cần cài dpkt: pip install dpkt")
+            return []
+
+        packets = []
+        try:
+            with open(filepath, 'rb') as f:
+                scanner = dpkt.pcapng.Scanner(f)
+                for ts, buf, datalink in scanner:
+                    packets.append(buf)
+                    if callback:
+                        callback(buf)
+            print(f"[+] Đọc được {len(packets)} gói tin từ {filepath} (pcapng)")
+        except Exception as e:
+            print(f"[!] Lỗi đọc pcapng: {e}")
+
+        return packets
+
+    
     @staticmethod
     def load_from_pcap(filepath, callback=None) -> list:
         """
