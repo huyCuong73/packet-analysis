@@ -230,6 +230,108 @@ def get_friendly_interfaces():
     interfaces = PacketCapture.list_interfaces()
     return jsonify(interfaces)
 
+@app.route("/api/replay-pcap", methods=["POST"])
+def replay_pcap():
+    """
+    Replay file .pcap: đọc và emit từng gói tin qua WebSocket
+    với tốc độ delay có thể điều chỉnh.
+    """
+    global _current_session_id, _is_capturing
+
+    if "file" not in request.files:
+        return jsonify({"error": "Không có file"}), 400
+
+    file = request.files["file"]
+    speed = float(request.form.get("speed", 1.0))
+
+    if not file.filename.endswith(".pcap"):
+        return jsonify({"error": "Chỉ hỗ trợ file .pcap"}), 400
+
+    filename = secure_filename(file.filename)
+    filepath = os.path.join(UPLOAD_FOLDER, filename)
+    file.save(filepath)
+
+    # Tạo session mới cho replay
+    session_id = db.create_session(f"Replay: {filename}")
+    _current_session_id = session_id
+
+    socketio.emit("session_created", {
+        "session_id": session_id,
+        "name": f"Replay: {filename}"
+    })
+    
+    _is_capturing = True
+    socketio.emit("capture_status", {"status": "started"})
+
+    try:
+        packets = PacketCapture.load_from_pcap(filepath)
+    except Exception as e:
+        return jsonify({"error": f"Không đọc được file: {str(e)}"}), 400
+
+    total = len(packets)
+
+    # Replay từng gói trong background thread
+    def do_replay():
+        import time as _time
+        delay = max(0.01, 0.1 / speed)  # delay giữa các gói
+
+        for i, raw_bytes in enumerate(packets):
+            if not _is_capturing:
+                break
+
+            analyzed = analyze_packet(raw_bytes)
+            packet_id = db.save_packet(analyzed, session_id=session_id)
+
+            ip = analyzed.get("ip", {})
+            tr = analyzed.get("transport", {})
+
+            dns_query = ""
+            app_layer = analyzed.get("app_layer", {})
+            dns_info = app_layer.get("dns", {})
+            if dns_info.get("type") == "query" and dns_info.get("queries"):
+                dns_query = dns_info["queries"][0].get("name", "")
+
+            credentials = []
+            http_info = app_layer.get("http", {})
+            if http_info.get("credentials_found"):
+                credentials = http_info.get("credentials", [])
+
+            socketio.emit("new_packet", {
+                "id":       packet_id,
+                "time":     analyzed.get("time"),
+                "protocol": analyzed.get("transport_proto"),
+                "src_ip":   ip.get("src_ip"),
+                "dst_ip":   ip.get("dst_ip"),
+                "src_port": tr.get("src_port"),
+                "dst_port": tr.get("dst_port"),
+                "length":   ip.get("total_length", 0),
+                "ttl":      ip.get("ttl"),
+                "flags":    tr.get("flags_active", []),
+                "service":  tr.get("service", ""),
+                "dns_query": dns_query,
+                "credentials": credentials,
+            })
+
+            # Emit progress
+            progress = int((i + 1) / total * 100)
+            socketio.emit("replay_progress", {"progress": progress})
+
+            _time.sleep(delay)
+
+        socketio.emit("replay_progress", {"progress": 100})
+        socketio.emit("capture_status", {"status": "stopped"})
+
+    thread = threading.Thread(target=do_replay, daemon=True)
+    thread.start()
+
+    os.remove(filepath)
+
+    return jsonify({
+        "session_id": session_id,
+        "total_packets": total,
+        "status": "replaying"
+    })
+
 # ─── WebSocket ────────────────────────────────────────────────────────────
 
 @socketio.on("connect")

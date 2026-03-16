@@ -144,6 +144,6 @@
     min-height: 0;
     display: flex;
     flex-direction: column;
-    overflow-y: auto; // Cho phép scroll dọc
-    overflow-x: hidden; // Chặn scroll ngang
+    overflow-y: auto; // Cho phép scroll dọc cho các trang thông thường
+    overflow-x: hidden;
 }

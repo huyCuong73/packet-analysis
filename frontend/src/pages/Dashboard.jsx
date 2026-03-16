@@ -27,6 +27,10 @@ function Dashboard({ socket }) {
 		currentSessionId,
 		currentSessionName,
 		dnsMap,
+		clearPackets,
+		isReplaying,
+		setIsReplaying,
+		replayProgress,
 	} = socket;
 
 	const [searchParams] = useSearchParams();
@@ -62,10 +66,6 @@ function Dashboard({ socket }) {
 	const [pcapSessionName, setPcapSessionName] = useState('');
 	const [isPcapMode, setIsPcapMode] = useState(false);
 	const [showUploader, setShowUploader] = useState(false);
-
-	// State cho tính năng replay (vá lỗi isReplaying is not defined)
-	const [isReplaying, setIsReplaying] = useState(false);
-	const [replayProgress, setReplayProgress] = useState(0);
 
 	const handlePcapLoaded = ({ sessionId, sessionName, packets, total }) => {
 		setPcapPackets(packets);
@@ -136,6 +136,7 @@ function Dashboard({ socket }) {
 				formData,
 				{ headers: { 'Content-Type': 'multipart/form-data' } }
 			)
+			setIsReplaying(true) // Bắt đầu trạng thái replay
 		} catch (err) {
 			console.error('Replay error:', err)
 		}

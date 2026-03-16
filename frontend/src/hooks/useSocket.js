@@ -8,6 +8,8 @@ export function useSocket() {
     const [currentSessionId, setCurrentSessionId] = useState(null); 
     const [currentSessionName, setCurrentSessionName] = useState('');
     const [dnsMap, setDnsMap] = useState({}); // Lịch sử DNS
+    const [isReplaying, setIsReplaying] = useState(false);
+    const [replayProgress, setReplayProgress] = useState(0);
 
     useEffect(() => {
         socket.on('connect', () => setIsConnected(true));
@@ -22,13 +24,29 @@ export function useSocket() {
         });
 
         socket.on('capture_status', (data) => {
-            setIsCapturing(data.status === 'started');
+            const started = data.status === 'started';
+            setIsCapturing(started);
+            if (!started) {
+                setIsReplaying(false);
+                setReplayProgress(0);
+            }
         });
 
         // Lắng nghe session mới được tạo
         socket.on('session_created', (data) => {
             setCurrentSessionId(data.session_id);
             setCurrentSessionName(data.name);
+        });
+
+        // Lắng nghe progress replay
+        socket.on('replay_progress', (data) => {
+            setReplayProgress(data.progress);
+            if (data.progress === 100) {
+                setTimeout(() => {
+                    setIsReplaying(false);
+                    setReplayProgress(0);
+                }, 2000);
+            }
         });
 
         return () => {
@@ -38,6 +56,7 @@ export function useSocket() {
             socket.off('capture_status');
             socket.off('session_created');
             socket.off('dns_resolved');
+            socket.off('replay_progress');
         };
     }, []);
 
@@ -59,5 +78,8 @@ export function useSocket() {
         currentSessionId,
         currentSessionName,
         dnsMap,
+        isReplaying,
+        setIsReplaying,
+        replayProgress,
     };
 }

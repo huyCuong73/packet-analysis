@@ -57,7 +57,6 @@ function DnsTimeline({ socket }) {
     const { packets } = socket
     
     const [filterText, setFilterText] = useState('')
-    const bottomRef = useRef(null)
 
     // Trích xuất & tính toán DNS timeline từ packets
     const dnsEntries = useMemo(() => {
@@ -125,12 +124,12 @@ function DnsTimeline({ socket }) {
         return [...new Set(filteredEntries.map(e => e.rootDomain))]
     }, [filteredEntries])
 
-    // Auto-scroll bảng
-    useEffect(() => {
-        if (bottomRef.current) {
-            bottomRef.current.scrollIntoView({ behavior: 'smooth' })
-        }
-    }, [dnsEntries.length])
+    // Link to bottom (removed auto-scroll to prevent page jumping)
+    // useEffect(() => {
+    //     if (bottomRef.current) {
+    //         bottomRef.current.scrollIntoView({ behavior: 'smooth' })
+    //     }
+    // }, [dnsEntries.length])
 
     // Copy domain
     const handleCopy = (text) => {
@@ -444,7 +443,6 @@ function DnsTimeline({ socket }) {
                             ))}
                         </tbody>
                     </table>
-                    <div ref={bottomRef} />
                 </div>
             </div>
         </div>
