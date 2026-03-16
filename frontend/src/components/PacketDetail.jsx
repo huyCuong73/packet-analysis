@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import axios from 'axios';
 import DetailSection from './DetailSection';
 import DetailField from './DetailField';
+import { Package, Loader, AlertTriangle } from 'lucide-react';
 import '../styles/_detail.scss';
 
 function PacketDetail({ packetId }) {
@@ -31,36 +32,38 @@ function PacketDetail({ packetId }) {
 
     return (
         <div className="detail-panel">
-            <div className="detail-panel__title">
+            <div className="detail-panel__title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 {loading
-                    ? '⏳ Đang tải...'
+                    ? <><Loader size={18} className="spin" /> Đang tải...</>
                     : hasData
-                      ? `📦 Chi tiết gói tin #${packetId} — ${detail.summary}`
-                      : '📦 Chi tiết gói tin'}
+                      ? <><Package size={18} /> Chi tiết gói tin #{packetId} — {detail.summary}</>
+                      : <><Package size={18} /> Chi tiết gói tin</>}
             </div>
 
-            {/* Placeholder khi chưa chọn gói tin */}
-            {!hasData && !loading && (
-                <div className="detail-panel__placeholder">
-                    Click vào 1 gói tin để xem chi tiết
-                </div>
-            )}
+            {/* ── Khu vực nội dung có thể cuộn ────────────────────────────── */}
+            <div className="detail-panel__content">
+                {/* Placeholder khi chưa chọn gói tin */}
+                {!hasData && !loading && (
+                    <div className="detail-panel__placeholder">
+                        Click vào 1 gói tin để xem chi tiết
+                    </div>
+                )}
 
-            {/* Loading skeleton */}
-            {loading && (
-                <div className="detail-panel__skeleton">
-                    <div className="skeleton-line skeleton-line--w80" />
-                    <div className="skeleton-line skeleton-line--w60" />
-                    <div className="skeleton-line skeleton-line--w90" />
-                    <div className="skeleton-line skeleton-line--w50" />
-                    <div className="skeleton-line skeleton-line--w70" />
-                    <div className="skeleton-line skeleton-line--w80" />
-                </div>
-            )}
+                {/* Loading skeleton */}
+                {loading && (
+                    <div className="detail-panel__skeleton">
+                        <div className="skeleton-line skeleton-line--w80" />
+                        <div className="skeleton-line skeleton-line--w60" />
+                        <div className="skeleton-line skeleton-line--w90" />
+                        <div className="skeleton-line skeleton-line--w50" />
+                        <div className="skeleton-line skeleton-line--w70" />
+                        <div className="skeleton-line skeleton-line--w80" />
+                    </div>
+                )}
 
-            {/* ── Dữ liệu thực ─────────────────────────────────────── */}
-            {hasData && (
-                <>
+                {/* ── Dữ liệu thực ─────────────────────────────────────── */}
+                {hasData && (
+                    <>
                     {/* Tầng Ethernet */}
                     {eth.src_mac && (
                         <DetailSection title="Ethernet Header (Tầng liên kết dữ liệu)">
@@ -159,7 +162,7 @@ function PacketDetail({ packetId }) {
                             ))}
                             {app.dns.is_suspicious && (
                                 <DetailField
-                                    label="⚠️ Cảnh báo"
+                                    label={<span style={{display: 'flex', alignItems: 'center', gap: '4px'}}><AlertTriangle size={14} /> Cảnh báo</span>}
                                     value={app.dns.suspicious_reason}
                                     highlight="danger"
                                 />
@@ -184,7 +187,7 @@ function PacketDetail({ packetId }) {
                                     />
                                     {app.http.credentials_found && (
                                         <DetailField
-                                            label="⚠️ Credentials"
+                                            label={<span style={{display: 'flex', alignItems: 'center', gap: '4px'}}><AlertTriangle size={14} /> Credentials</span>}
                                             value={app.http.credentials
                                                 .map((c) => `${c.type}: ${c.value}`)
                                                 .join(' | ')}
@@ -220,6 +223,7 @@ function PacketDetail({ packetId }) {
                     )}
                 </>
             )}
+            </div>
         </div>
     );
 }

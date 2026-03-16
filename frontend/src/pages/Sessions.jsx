@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import '../styles/_sessions.scss';
+import { FileText, RefreshCw, Inbox, Eye, Trash2 } from 'lucide-react';
+import axios from 'axios';
 
 function Sessions() {
     const [sessions, setSessions] = useState([]);
@@ -35,8 +36,8 @@ function Sessions() {
         <div className="page-content">
             <div className="sessions-page">
                 <div style={{ marginBottom: '16px' }}>
-                    <h2 style={{ fontSize: '16px', fontWeight: 700 }}>
-                        📋 Lịch sử phiên capture
+                    <h2 style={{ fontSize: '16px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <FileText size={18} /> Lịch sử phiên capture
                     </h2>
                     <p
                         style={{
@@ -49,8 +50,8 @@ function Sessions() {
                     </p>
                 </div>
 
-                <button className="btn btn--clear" onClick={fetchSessions}>
-                    🔄 Refresh
+                <button className="btn btn--clear" onClick={fetchSessions} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <RefreshCw size={14} /> Refresh
                 </button>
 
                 {sessions.length === 0 ? (
@@ -61,7 +62,7 @@ function Sessions() {
                             color: '#8b949e',
                         }}
                     >
-                        <div style={{ fontSize: '40px' }}>📭</div>
+                        <div style={{ fontSize: '40px' }}><Inbox size={48} strokeWidth={1} /></div>
                         <div style={{ marginTop: '12px' }}>
                             Chưa có phiên nào
                         </div>
@@ -90,22 +91,16 @@ function Sessions() {
                                     <button
                                         className="btn btn--start"
                                         onClick={() => handleView(s.id)}
-                                        style={{
-                                            padding: '4px 12px',
-                                            fontSize: '12px',
-                                        }}
+                                        style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '4px 12px', fontSize: '12px' }}
                                     >
-                                        👁 Xem
+                                        <Eye size={12} /> Xem
                                     </button>
                                     <button
                                         className="btn btn--stop"
                                         onClick={() => handleDelete(s.id)}
-                                        style={{
-                                            padding: '4px 12px',
-                                            fontSize: '12px',
-                                        }}
+                                        style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '4px 12px', fontSize: '12px' }}
                                     >
-                                        🗑 Xóa
+                                        <Trash2 size={12} /> Xóa
                                     </button>
                                 </div>
                             </div>

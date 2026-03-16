@@ -5,12 +5,17 @@ export function useSocket() {
     const [isConnected, setIsConnected] = useState(false);
     const [isCapturing, setIsCapturing] = useState(false);
     const [packets, setPackets] = useState([]);
-    const [currentSessionId, setCurrentSessionId] = useState(null); // ← thêm
+    const [currentSessionId, setCurrentSessionId] = useState(null); 
     const [currentSessionName, setCurrentSessionName] = useState('');
+    const [dnsMap, setDnsMap] = useState({}); // Lịch sử DNS
 
     useEffect(() => {
         socket.on('connect', () => setIsConnected(true));
         socket.on('disconnect', () => setIsConnected(false));
+
+        socket.on('dns_resolved', ({ ip, domain }) => {
+            setDnsMap((prev) => ({ ...prev, [ip]: domain }));
+        });
 
         socket.on('new_packet', (packet) => {
             setPackets((prev) => [packet, ...prev]);
@@ -32,6 +37,7 @@ export function useSocket() {
             socket.off('new_packet');
             socket.off('capture_status');
             socket.off('session_created');
+            socket.off('dns_resolved');
         };
     }, []);
 
@@ -51,6 +57,7 @@ export function useSocket() {
         stopCapture,
         clearPackets,
         currentSessionId,
-        currentSessionName, // ← export thêm
+        currentSessionName,
+        dnsMap,
     };
 }

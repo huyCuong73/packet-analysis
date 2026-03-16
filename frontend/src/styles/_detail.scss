@@ -4,8 +4,13 @@
     background: $bg-secondary;
     border: 1px solid $border-color;
     border-radius: $radius-md;
+    // Flexbox column: title cố định, content chiếm phần còn lại
+    display: flex;
+    flex-direction: column;
     overflow: hidden;
-    min-height: 400px;
+
+    // Đảm bảo chiều cao KHÔNG BỊ PHÌNH TO quá màn hình
+    max-height: calc(100vh - 100px);
 
     // ── Tiêu đề panel ──────────────────────────────────────────────
     &__title {
@@ -15,6 +20,32 @@
         font-weight: 600;
         color: $accent-blue;
         font-size: 13px;
+        flex-shrink: 0; // Không bị co lại
+    }
+
+    // ── Vùng nội dung cuộn được ─────────────────────────────────────
+    &__content {
+        flex: 1;
+        min-height: 0; // BẮT BUỘC: cho phép flex child co lại và cuộn
+        overflow-y: auto;
+
+        // Custom scrollbar cho đẹp
+        &::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        &::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        &::-webkit-scrollbar-thumb {
+            background: rgba($text-secondary, 0.3);
+            border-radius: 4px;
+        }
+
+        &::-webkit-scrollbar-thumb:hover {
+            background: rgba($text-secondary, 0.5);
+        }
     }
 
     // ── Placeholder khi chưa chọn gói tin ───────────────────────────
@@ -39,6 +70,7 @@
     // ── Từng section (Ethernet / IP / TCP...) ──────────────────────
     &__section {
         border-bottom: 1px solid $border-color;
+
         &:last-child {
             border-bottom: none;
         }
@@ -63,6 +95,7 @@
             font-size: 10px;
             transition: transform 0.2s;
         }
+
         &--open::before {
             content: '▼ ';
         }
@@ -96,9 +129,11 @@
             &--highlight {
                 color: $accent-yellow;
             }
+
             &--danger {
                 color: $accent-red;
             }
+
             &--ok {
                 color: $accent-green;
             }
@@ -121,23 +156,40 @@
 .skeleton-line {
     height: 14px;
     border-radius: 4px;
-    background: linear-gradient(
-        90deg,
-        $bg-tertiary 25%,
-        lighten($bg-tertiary, 5%) 50%,
-        $bg-tertiary 75%
-    );
+    background: linear-gradient(90deg,
+            $bg-tertiary 25%,
+            color-mix(in srgb, $bg-tertiary, white 5%) 50%,
+            $bg-tertiary 75%);
     background-size: 200% 100%;
     animation: skeleton-shimmer 1.5s ease-in-out infinite;
 
-    &--w50 { width: 50%; }
-    &--w60 { width: 60%; }
-    &--w70 { width: 70%; }
-    &--w80 { width: 80%; }
-    &--w90 { width: 90%; }
+    &--w50 {
+        width: 50%;
+    }
+
+    &--w60 {
+        width: 60%;
+    }
+
+    &--w70 {
+        width: 70%;
+    }
+
+    &--w80 {
+        width: 80%;
+    }
+
+    &--w90 {
+        width: 90%;
+    }
 }
 
 @keyframes skeleton-shimmer {
-    0% { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
+    0% {
+        background-position: 200% 0;
+    }
+
+    100% {
+        background-position: -200% 0;
+    }
 }

@@ -1,108 +1,192 @@
-import { useState } from 'react';
-import InterfaceSelector from './InterfaceSelector';
-import { useInterfaces } from '../hooks/useInterfaces';
+import { useState, useRef } from 'react'
+import InterfaceSelector from './InterfaceSelector'
+import { useInterfaces } from '../hooks/useInterfaces'
+import { Play, Square, Snail, Zap, Rocket, PlaySquare, FolderOpen, X, Trash2, FileText } from 'lucide-react'
 
 function Controls({
-    isConnected,
-    isCapturing,
-    packetCount,
-    onStart,
-    onStop,
-    onClear,
-    currentSessionName,
-    onUploadPcap,
-    isPcapMode,
-    onExitPcap,
+	isConnected, isCapturing, packetCount,
+	onStart, onStop, onClear,
+	currentSessionName,
+	onUploadPcap, isPcapMode, onExitPcap,
+	// ── Props mới cho replay ──
+	onReplay,
+	isReplaying,
+	replayProgress
 }) {
-    const [filter, setFilter] = useState('');
-    const { interfaces, selectedInterface, setSelectedInterface, loading } =
-        useInterfaces();
+	const [filter, setFilter] = useState('')
+	const [speed, setSpeed] = useState('1')
+	const replayInputRef = useRef()   // input file ẩn
 
-    const handleStart = () => {
-        // Truyền interface vào startCapture
-        // 'auto' → truyền chuỗi rỗng → server hiểu là None
-        const iface = selectedInterface === 'auto' ? '' : selectedInterface;
-        onStart(filter, '', iface);
-    };
+	const {
+		interfaces, selectedInterface,
+		setSelectedInterface, loading
+	} = useInterfaces()
 
-    return (
-        <div className="controls">
-            {/* Chọn interface */}
-            <InterfaceSelector
-                interfaces={interfaces}
-                value={selectedInterface}
-                onChange={setSelectedInterface}
-                disabled={isCapturing || isPcapMode}
-                loading={loading}
-            />
+	const handleStart = () => {
+		const iface = selectedInterface === 'auto' ? '' : selectedInterface
+		onStart(filter, '', iface)
+	}
 
-            <span className="controls__label">Filter:</span>
-            <input
-                className="controls__filter-input"
-                placeholder="vd: tcp port 80"
-                value={filter}
-                onChange={(e) => setFilter(e.target.value)}
-                onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !isCapturing && isConnected)
-                        handleStart();
-                }}
-                disabled={isCapturing || isPcapMode}
-            />
+	// Khi chọn file xong → gửi lên backend
+	const handleFileSelected = (e) => {
+		const file = e.target.files[0]
+		if (!file) return
+		onReplay(file, parseFloat(speed))
+		// Reset input để có thể chọn lại cùng file
+		e.target.value = ''
+	}
 
-            <button
-                className="btn btn--start"
-                onClick={handleStart}
-                disabled={!isConnected || isCapturing || isPcapMode}
-            >
-                ▶ Bắt đầu
-            </button>
+	const isBusy = isCapturing || isReplaying || isPcapMode
 
-            <button
-                className="btn btn--stop"
-                onClick={onStop}
-                disabled={!isCapturing}
-            >
-                ⏹ Dừng
-            </button>
+	return (
+		<div className="controls">
 
-            <button
-                className="btn btn--clear"
-                onClick={onUploadPcap}
-                disabled={isCapturing}
-            >
-                📂 Mở .pcap
-            </button>
+			{/* Interface selector */}
+			<InterfaceSelector
+				interfaces={interfaces}
+				value={selectedInterface}
+				onChange={setSelectedInterface}
+				disabled={isBusy}
+				loading={loading}
+			/>
 
-            {isPcapMode && (
-                <button
-                    className="btn btn--stop"
-                    onClick={onExitPcap}
-                    style={{ fontSize: '12px' }}
-                >
-                    ✕ Đóng file
-                </button>
-            )}
+			{/* BPF Filter */}
+			<span className="controls__label">Filter:</span>
+			<input
+				className="controls__filter-input"
+				placeholder='vd: tcp port 80'
+				value={filter}
+				onChange={e => setFilter(e.target.value)}
+				onKeyDown={e => {
+					if (e.key === 'Enter' && !isBusy && isConnected)
+						handleStart()
+				}}
+				disabled={isBusy}
+			/>
 
-            <button
-                className="btn btn--clear"
-                onClick={onClear}
-                disabled={isCapturing}
-            >
-                🗑 Xóa
-            </button>
+			{/* Bắt đầu */}
+			<button className="btn btn--start"
+				onClick={handleStart}
+				disabled={!isConnected || isBusy}
+				style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+				<Play size={14} /> Bắt đầu
+			</button>
 
-            <span className="controls__count">
-                {isCapturing && currentSessionName && (
-                    <span style={{ color: '#58a6ff', marginRight: '8px' }}>
-                        📋 {currentSessionName}
-                    </span>
-                )}
-                {isCapturing
-                    ? `⚡ ${packetCount} gói tin`
-                    : `${packetCount} gói tin`}
-            </span>
-        </div>
-    );
+			{/* Dừng */}
+			<button className="btn btn--stop"
+				onClick={onStop}
+				disabled={!isCapturing && !isReplaying}
+				style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+				<Square size={14} /> Dừng
+			</button>
+
+			{/* ── Replay section ──────────────────────────────────────── */}
+			{/* Chọn tốc độ */}
+			<select
+				className="speed-select"
+				value={speed}
+				onChange={e => setSpeed(e.target.value)}
+				disabled={isBusy}
+				title="Tốc độ replay"
+			>
+				<option value="0.5">🐢 0.5x</option>
+				<option value="1">▶ 1x</option>
+				<option value="2">⚡ 2x</option>
+				<option value="5">🚀 5x</option>
+			</select>
+
+			{/* Nút Replay — click → mở file picker */}
+			<button
+				className="btn btn--clear"
+				onClick={() => replayInputRef.current.click()}
+				disabled={isBusy}
+				title="Chọn file .pcap để replay"
+				style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+			>
+				<PlaySquare size={14} /> Replay .pcap
+			</button>
+
+			{/* Input file ẩn */}
+			<input
+				ref={replayInputRef}
+				type="file"
+				accept=".pcap"
+				style={{ display: 'none' }}
+				onChange={handleFileSelected}
+			/>
+
+			{/* Progress replay */}
+			{isReplaying && (
+				<div style={{
+					display: 'flex',
+					alignItems: 'center',
+					gap: '6px'
+				}}>
+					<div style={{
+						width: '80px',
+						height: '4px',
+						background: '#21262d',
+						borderRadius: '2px',
+						overflow: 'hidden'
+					}}>
+						<div style={{
+							width: `${replayProgress}%`,
+							height: '100%',
+							background: '#d2a8ff',
+							transition: 'width 0.3s ease'
+						}} />
+					</div>
+					<span style={{
+						color: '#d2a8ff',
+						fontSize: '11px',
+						fontFamily: 'monospace'
+					}}>
+						{replayProgress}%
+					</span>
+				</div>
+			)}
+
+			{/* Mở PCAP */}
+			<button className="btn btn--clear"
+				onClick={onUploadPcap}
+				disabled={isBusy}
+				style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+				<FolderOpen size={14} /> Mở .pcap
+			</button>
+
+			{isPcapMode && (
+				<button className="btn btn--stop"
+					onClick={onExitPcap}
+					style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+					<X size={14} /> Đóng file
+				</button>
+			)}
+
+			{/* Xóa */}
+			<button className="btn btn--clear"
+				onClick={onClear}
+				disabled={isBusy}
+				style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+				<Trash2 size={14} /> Xóa
+			</button>
+
+			{/* Đếm gói tin */}
+			<span className="controls__count" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+				{isReplaying && (
+					<span style={{ color: '#d2a8ff', marginRight: '8px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+						<PlaySquare size={14} /> Đang replay...
+					</span>
+				)}
+				{isCapturing && currentSessionName && (
+					<span style={{ color: '#58a6ff', marginRight: '8px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+						<FileText size={14} /> {currentSessionName}
+					</span>
+				)}
+				{isBusy ? <><Zap size={14} /> {packetCount} gói tin</> : `${packetCount} gói tin`}
+			</span>
+
+		</div>
+	)
 }
 
-export default Controls;
+export default Controls

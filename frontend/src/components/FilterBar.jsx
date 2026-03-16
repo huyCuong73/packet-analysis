@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Search, X } from 'lucide-react';
 
 function FilterBar({ totalCount, filteredCount, onFilterChange }) {
     const [search, setSearch] = useState('');
@@ -30,7 +31,7 @@ function FilterBar({ totalCount, filteredCount, onFilterChange }) {
 
     return (
         <div className="filter-bar">
-            <span className="filter-bar__icon">🔍</span>
+            <span className="filter-bar__icon"><Search size={14} /></span>
 
             <input
                 className="filter-bar__input filter-bar__input--search"
@@ -63,8 +64,8 @@ function FilterBar({ totalCount, filteredCount, onFilterChange }) {
             />
 
             {hasFilters && (
-                <button className="filter-bar__reset" onClick={handleReset}>
-                    ✕ Reset
+                <button className="filter-bar__reset" onClick={handleReset} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <X size={14} /> Reset
                 </button>
             )}
 

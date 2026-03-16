@@ -8,16 +8,52 @@ from sniffer.capture import PacketCapture
 from scapy.all import sniff
 import threading
 import os
+import queue
+import socket as py_socket
 
 app      = Flask(__name__)
 CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True)
 socketio = SocketIO(app, cors_allowed_origins="*")
+
+# ─── DNS RESOLVER NGẦM ────────────────────────────────────────────────────
+_dns_queue = queue.Queue()
+_dns_cache = {}
+
+def _dns_worker():
+    while True:
+        try:
+            ip = _dns_queue.get()
+            if ip is None: break
+            
+            try:
+                # Bỏ qua tra cứu các IP nội bộ / LAN để tăng tốc
+                if (ip.startswith("10.") or 
+                    ip.startswith("192.168.") or 
+                    ip.startswith("127.") or 
+                    ip.startswith("172.") or 
+                    ip == "255.255.255.255"):
+                    _dns_cache[ip] = ip
+                else:
+                    host, _, _ = py_socket.gethostbyaddr(ip)
+                    _dns_cache[ip] = host
+                    socketio.emit("dns_resolved", {"ip": ip, "domain": host})
+            except Exception:
+                _dns_cache[ip] = ip  # Lỗi (không có DNS) thì gán lại IP mặc định
+            
+            _dns_queue.task_done()
+        except Exception:
+            pass
+
+threading.Thread(target=_dns_worker, daemon=True).start()
+# ────────────────────────────────────────────────────────────────────────
+
 
 db      = Database()
 capture = PacketCapture()
 _sniff_thread      = None
 _is_capturing      = False
 _current_session_id = None      # ← session đang chạy
+_current_session_name = ""      # ← tên session đang chạy
 
 UPLOAD_FOLDER = "data/uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -32,6 +68,19 @@ def process_packet(packet):
     ip = analyzed.get("ip", {})
     tr = analyzed.get("transport", {})
 
+    # Trích xuất DNS query name nếu có
+    dns_query = ""
+    app_layer = analyzed.get("app_layer", {})
+    dns_info = app_layer.get("dns", {})
+    if dns_info.get("type") == "query" and dns_info.get("queries"):
+        dns_query = dns_info["queries"][0].get("name", "")
+
+    # Trích xuất Clear-text Credentials (HTTP)
+    credentials = []
+    http_info = app_layer.get("http", {})
+    if http_info.get("credentials_found"):
+        credentials = http_info.get("credentials", [])
+
     socketio.emit("new_packet", {
         "id":       packet_id,
         "time":     analyzed.get("time"),
@@ -43,8 +92,16 @@ def process_packet(packet):
         "length":   ip.get("total_length", 0),
         "ttl":      ip.get("ttl"),
         "flags":    tr.get("flags_active", []),
-        "service":  tr.get("service", "")
+        "service":  tr.get("service", ""),
+        "dns_query": dns_query,
+        "credentials": credentials,
     })
+
+    # Xếp hàng tra cứu Tên miền (Reverse DNS) ngầm
+    for _ip in (ip.get("src_ip"), ip.get("dst_ip")):
+        if _ip and _ip not in _dns_cache:
+            _dns_cache[_ip] = "pending"
+            _dns_queue.put(_ip)
 
 # ─── REST API ─────────────────────────────────────────────────────────────
 
@@ -140,6 +197,12 @@ def upload_pcap():
             "service":  tr.get("service", "")
         })
 
+        # Cầm IP quăng cho DNS Worker xử lý
+        for _ip in (ip.get("src_ip"), ip.get("dst_ip")):
+            if _ip and _ip not in _dns_cache:
+                _dns_cache[_ip] = "pending"
+                _dns_queue.put(_ip)
+
     # Xóa file tạm sau khi xử lý xong
     os.remove(filepath)
 
@@ -210,19 +273,32 @@ def get_friendly_interfaces():
 
 # ─── WebSocket ────────────────────────────────────────────────────────────
 
+@socketio.on("connect")
+def handle_connect():
+    global _is_capturing, _current_session_id, _current_session_name
+    # Nếu đang capture thì báo ngay cho người mới vào biết
+    if _is_capturing:
+        socketio.emit("capture_status", {"status": "started"})
+        if _current_session_id:
+            socketio.emit("session_created", {
+                "session_id": _current_session_id,
+                "name":       _current_session_name
+            })
+
 @socketio.on("start_capture")
 def handle_start(data):
-    global _sniff_thread, _is_capturing, _current_session_id
+    global _sniff_thread, _is_capturing, _current_session_id, _current_session_name
     if _is_capturing:
         return
 
-    session_name        = data.get("name", "")
-    _current_session_id = db.create_session(session_name)
-    _is_capturing       = True
+    session_name          = data.get("name", "")
+    _current_session_id   = db.create_session(session_name)
+    _current_session_name = session_name or f"Session #{_current_session_id}"
+    _is_capturing         = True
 
     socketio.emit("session_created", {
         "session_id": _current_session_id,
-        "name":       session_name or f"Session #{_current_session_id}"
+        "name":       _current_session_name
     })
 
     bpf_filter = data.get("filter",    "")
@@ -247,6 +323,17 @@ def handle_stop():
     global _is_capturing
     _is_capturing = False
     socketio.emit("capture_status", {"status": "stopped"})
+
+@socketio.on("disconnect")
+def handle_disconnect():
+    """
+    Khi user tắt tab hoặc F5, tự động dừng capture 
+    để tránh bị chạy ngầm vô hạn tải nặng máy.
+    """
+    global _is_capturing
+    if _is_capturing:
+        _is_capturing = False
+        print("[!] Client ngắt kết nối -> Tự động dừng Capture chạy ngầm.")
 
 if __name__ == "__main__":
     print("[*] Server chạy tại http://localhost:5000")

@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
 import axios from 'axios';
+import { FolderOpen, Loader, AlertTriangle } from 'lucide-react';
 
 function PcapUploader({ onLoaded }) {
     const [isDragOver, setIsDragOver] = useState(false);
@@ -70,7 +71,7 @@ function PcapUploader({ onLoaded }) {
                 onDrop={handleDrop}
             >
                 <div className="upload-zone__icon">
-                    {isLoading ? '⏳' : '📂'}
+                    {isLoading ? <Loader size={32} className="spin" /> : <FolderOpen size={32} />}
                 </div>
                 <div className="upload-zone__text">
                     {isLoading
@@ -108,7 +109,7 @@ function PcapUploader({ onLoaded }) {
                         fontSize: '12px',
                     }}
                 >
-                    ⚠️ {error}
+                    <AlertTriangle size={14} style={{ verticalAlign: 'middle', marginRight: '4px' }} /> {error}
                 </div>
             )}
         </div>

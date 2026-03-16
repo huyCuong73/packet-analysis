@@ -2,52 +2,85 @@
 
 .layout {
     display: flex;
-    min-height: 100vh;
+    flex: 1;
+    min-height: 0;
+    position: relative; // Để sidebar absolute hoạt động chính xác
+    padding-left: 64px; // Chừa chỗ cho sidebar khi thu gọn
 }
 
 // ── Sidebar trái ───────────────────────────────────────────────────
 .sidebar {
-    width: 56px; // thu nhỏ mặc định — chỉ hiện icon
+    width: 64px;
     background: $bg-secondary;
     border-right: 1px solid $border-color;
     display: flex;
     flex-direction: column;
-    align-items: center;
     padding: 12px 0;
     gap: 4px;
-    position: sticky;
+    position: absolute; // Float lên trên
+    left: 0;
     top: 0;
-    height: 100vh;
+    bottom: 0;
+    height: auto; // Chiếm hết chiều cao còn lại
+    overflow-x: hidden;
     overflow-y: auto;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1000;
+
+    // Khi hover vào sidebar
+    &:hover {
+        width: 240px;
+        box-shadow: 10px 0 30px rgba(0, 0, 0, 0.4);
+    }
 
     &__logo {
-        font-size: 20px;
-        padding: 8px;
+        display: flex;
+        align-items: center;
+        padding: 8px 20px;
         margin-bottom: 8px;
+        gap: 12px;
+        min-width: 240px; // ngăn logo nén lại
+
+        &-text {
+            font-size: 16px;
+            font-weight: 700;
+            color: $text-primary;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+    }
+
+    &:hover &__logo-text {
+        opacity: 1;
     }
 
     &__divider {
         width: 32px;
         height: 1px;
         background: $border-color;
-        margin: 4px 0;
+        margin: 4px 16px;
+        transition: width 0.3s;
+    }
+
+    &:hover &__divider {
+        width: calc(100% - 32px);
     }
 }
 
 // ── Từng item trong sidebar ────────────────────────────────────────
 .nav-item {
-    width: 40px;
-    height: 40px;
+    margin: 0 12px;
+    height: 44px;
     display: flex;
     align-items: center;
-    justify-content: center;
     border-radius: $radius-md;
     cursor: pointer;
-    font-size: 18px;
     color: $text-secondary;
     text-decoration: none;
-    transition: all 0.15s ease;
-    position: relative;
+    transition: all 0.2s ease;
+    overflow: hidden;
+    white-space: nowrap;
 
     &:hover {
         background: $bg-tertiary;
@@ -56,34 +89,39 @@
 
     // Trạng thái active (đang ở trang này)
     &--active {
-        background: rgba(88, 166, 255, 0.15);
+        background: rgba(88, 166, 255, 0.1);
         color: $accent-blue;
+        font-weight: 600;
     }
 
-    // Tooltip hiện tên khi hover
-    &__tooltip {
-        position: absolute;
-        left: 52px;
-        background: $bg-tertiary;
-        color: $text-primary;
-        padding: 4px 10px;
-        border-radius: $radius-sm;
-        font-size: 12px;
-        white-space: nowrap;
-        pointer-events: none;
+    &__icon {
+        min-width: 40px;
+        height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+    }
+
+    &__label {
+        font-size: 14px;
+        margin-left: 8px;
         opacity: 0;
-        border: 1px solid $border-color;
-        transition: opacity 0.15s;
+        transition: opacity 0.2s ease 0.1s;
     }
 
-    &:hover &__tooltip {
+    .sidebar:hover & {
+        padding-left: 0;
+    }
+
+    .sidebar:hover &__label {
         opacity: 1;
     }
 
     // Badge số đỏ (thông báo alert chưa đọc)
     &__badge {
         position: absolute;
-        top: 4px;
+        top: 8px;
         right: 4px;
         background: $accent-red;
         color: white;
@@ -96,13 +134,16 @@
         align-items: center;
         justify-content: center;
         padding: 0 3px;
+        border: 2px solid $bg-secondary;
     }
 }
 
 // ── Phần nội dung bên phải sidebar ────────────────────────────────
 .page-content {
     flex: 1;
+    min-height: 0;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    overflow-y: auto; // Cho phép scroll dọc
+    overflow-x: hidden; // Chặn scroll ngang
 }

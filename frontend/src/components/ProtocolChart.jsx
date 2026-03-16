@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import {
     PieChart,
     Pie,
@@ -18,7 +19,7 @@ const COLORS = {
     OTHER: '#8b949e',
 };
 
-function ProtocolChart({ data }) {
+const ProtocolChart = memo(function ProtocolChart({ data }) {
     if (!data || data.length === 0) {
         return (
             <div
@@ -44,6 +45,7 @@ function ProtocolChart({ data }) {
                     cy="50%"
                     outerRadius={70}
                     labelLine={false}
+                    isAnimationActive={false} // Tắt hiệu ứng chuyển cảnh SVG khi update liên tục
                     // Hiển thị % trên từng miếng
                     label={({ protocol, percent }) =>
                         percent > 0.05
@@ -69,6 +71,6 @@ function ProtocolChart({ data }) {
             </PieChart>
         </ResponsiveContainer>
     );
-}
+});
 
 export default ProtocolChart;

@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import {
     LineChart,
     Line,
@@ -8,7 +9,7 @@ import {
     CartesianGrid,
 } from 'recharts';
 
-function TimeChart({ data }) {
+const TimeChart = memo(function TimeChart({ data }) {
     if (!data || data.length === 0) {
         return (
             <div
@@ -54,10 +55,11 @@ function TimeChart({ data }) {
                     strokeWidth={2}
                     dot={false} // không hiện chấm tròn — trông gọn hơn
                     activeDot={{ r: 4, fill: '#58a6ff' }}
+                    isAnimationActive={false}
                 />
             </LineChart>
         </ResponsiveContainer>
     );
-}
+});
 
 export default TimeChart;

@@ -10,6 +10,8 @@ import Sidebar from './components/SideBar';
 import Dashboard from './pages/Dashboard';
 import Alerts from './pages/Alerts';
 import Sessions from './pages/Sessions';
+import DnsTimeline from './pages/DnsTimeline';
+import CredentialsPage from './pages/CredentialsPage';
 import './styles/_layout.scss';
 import './styles/_sidebar.scss';
 
@@ -29,6 +31,14 @@ function App() {
                         />
                         <Route path="/alerts" element={<Alerts />} />
                         <Route path="/sessions" element={<Sessions />} />
+                        <Route
+                            path="/dns-timeline"
+                            element={<DnsTimeline socket={socket} />}
+                        />
+                        <Route
+                            path="/credentials"
+                            element={<CredentialsPage socket={socket} />}
+                        />
                     </Routes>
                 </div>
             </div>

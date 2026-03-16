@@ -55,6 +55,9 @@ class Database:
                 message    TEXT,
                 src_ip     TEXT
             );
+
+            CREATE INDEX IF NOT EXISTS idx_packets_session_id ON packets(session_id);
+            CREATE INDEX IF NOT EXISTS idx_alerts_session_id ON alerts(session_id);
         """)
         self.conn.commit()
 

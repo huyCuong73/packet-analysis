@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import '../styles/_alerts.scss';
+import { Bell, RefreshCw, CheckCircle } from 'lucide-react';
 
 function Alerts() {
     const [alerts, setAlerts] = useState([]);
@@ -27,8 +28,8 @@ function Alerts() {
             <div className="alerts-page">
                 {/* Tiêu đề */}
                 <div style={{ marginBottom: '16px' }}>
-                    <h2 style={{ fontSize: '16px', fontWeight: 700 }}>
-                        🚨 Cảnh báo bảo mật
+                    <h2 style={{ fontSize: '16px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Bell size={18} color="#f85149" /> Cảnh báo bảo mật
                     </h2>
                     <p
                         style={{
@@ -42,14 +43,16 @@ function Alerts() {
                 </div>
 
                 {/* Nút refresh */}
-                <button className="btn btn--clear" onClick={fetchAlerts}>
-                    🔄 Refresh
+                <button className="btn btn--clear" onClick={fetchAlerts} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <RefreshCw size={14} /> Refresh
                 </button>
 
                 {/* Danh sách alert */}
                 {alerts.length === 0 ? (
                     <div className="empty-state">
-                        <div className="empty-state__icon">✅</div>
+                        <div className="empty-state__icon">
+                            <CheckCircle size={40} color="#3fb950" />
+                        </div>
                         <div>Không có cảnh báo nào</div>
                         <div className="empty-state__text">
                             Hệ thống đang hoạt động bình thường

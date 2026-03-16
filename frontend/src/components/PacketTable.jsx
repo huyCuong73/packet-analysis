@@ -1,9 +1,17 @@
 import ProtocolBadge from './ProtocolBadge';
+import { Copy } from 'lucide-react';
 import '../styles/_table.scss';
 
-function PacketTable({ packets, selectedId, onSelectPacket }) {
+function PacketTable({ packets, selectedId, onSelectPacket, dnsMap = {} }) {
+    const handleCopyDomain = (e, domain) => {
+        e.stopPropagation();
+        if (domain && navigator.clipboard) {
+            navigator.clipboard.writeText(domain);
+        }
+    };
+
     return (
-        <div style={{ overflowY: 'auto', maxHeight: '450px' }}>
+        <div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
             <table className="packet-table">
                 {/* Header */}
                 <thead className="packet-table__header">
@@ -38,8 +46,34 @@ function PacketTable({ packets, selectedId, onSelectPacket }) {
                             <td>
                                 <ProtocolBadge protocol={packet.protocol} />
                             </td>
-                            <td>{packet.src_ip || '—'}</td>
-                            <td>{packet.dst_ip || '—'}</td>
+                            <td title={packet.src_ip}>
+                                {dnsMap[packet.src_ip] ? (
+                                    <>
+                                        {packet.src_ip} ({dnsMap[packet.src_ip]})
+                                        <span 
+                                            title="Copy Domain" 
+                                            onClick={(e) => handleCopyDomain(e, dnsMap[packet.src_ip])}
+                                            style={{ cursor: 'pointer', marginLeft: '6px', opacity: 0.5, display: 'inline-flex', alignItems: 'center' }}
+                                        >
+                                            <Copy size={12} />
+                                        </span>
+                                    </>
+                                ) : packet.src_ip || '—'}
+                            </td>
+                            <td title={packet.dst_ip}>
+                                {dnsMap[packet.dst_ip] ? (
+                                    <>
+                                        {packet.dst_ip} ({dnsMap[packet.dst_ip]})
+                                        <span 
+                                            title="Copy Domain" 
+                                            onClick={(e) => handleCopyDomain(e, dnsMap[packet.dst_ip])}
+                                            style={{ cursor: 'pointer', marginLeft: '6px', opacity: 0.5, display: 'inline-flex', alignItems: 'center' }}
+                                        >
+                                            <Copy size={12} />
+                                        </span>
+                                    </>
+                                ) : packet.dst_ip || '—'}
+                            </td>
                             <td>{packet.src_port || '—'}</td>
                             <td>{packet.dst_port || '—'}</td>
                             <td>{packet.length || '—'}</td>
