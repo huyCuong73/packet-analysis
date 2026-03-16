@@ -1,0 +1,108 @@
+@use 'variables' as *;
+
+.layout {
+    display: flex;
+    min-height: 100vh;
+}
+
+// ── Sidebar trái ───────────────────────────────────────────────────
+.sidebar {
+    width: 56px; // thu nhỏ mặc định — chỉ hiện icon
+    background: $bg-secondary;
+    border-right: 1px solid $border-color;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px 0;
+    gap: 4px;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+
+    &__logo {
+        font-size: 20px;
+        padding: 8px;
+        margin-bottom: 8px;
+    }
+
+    &__divider {
+        width: 32px;
+        height: 1px;
+        background: $border-color;
+        margin: 4px 0;
+    }
+}
+
+// ── Từng item trong sidebar ────────────────────────────────────────
+.nav-item {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: $radius-md;
+    cursor: pointer;
+    font-size: 18px;
+    color: $text-secondary;
+    text-decoration: none;
+    transition: all 0.15s ease;
+    position: relative;
+
+    &:hover {
+        background: $bg-tertiary;
+        color: $text-primary;
+    }
+
+    // Trạng thái active (đang ở trang này)
+    &--active {
+        background: rgba(88, 166, 255, 0.15);
+        color: $accent-blue;
+    }
+
+    // Tooltip hiện tên khi hover
+    &__tooltip {
+        position: absolute;
+        left: 52px;
+        background: $bg-tertiary;
+        color: $text-primary;
+        padding: 4px 10px;
+        border-radius: $radius-sm;
+        font-size: 12px;
+        white-space: nowrap;
+        pointer-events: none;
+        opacity: 0;
+        border: 1px solid $border-color;
+        transition: opacity 0.15s;
+    }
+
+    &:hover &__tooltip {
+        opacity: 1;
+    }
+
+    // Badge số đỏ (thông báo alert chưa đọc)
+    &__badge {
+        position: absolute;
+        top: 4px;
+        right: 4px;
+        background: $accent-red;
+        color: white;
+        font-size: 9px;
+        font-weight: 700;
+        min-width: 14px;
+        height: 14px;
+        border-radius: 7px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 3px;
+    }
+}
+
+// ── Phần nội dung bên phải sidebar ────────────────────────────────
+.page-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}

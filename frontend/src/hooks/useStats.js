@@ -1,0 +1,36 @@
+import { useState, useEffect } from 'react';
+import axios from 'axios';
+
+// Hook này gọi API để lấy dữ liệu thống kê
+// Tự động refresh mỗi 3 giây khi đang capture
+export function useStats(isCapturing) {
+    const [protocolStats, setProtocolStats] = useState([]);
+    const [topIPs, setTopIPs] = useState([]);
+    const [timeStats, setTimeStats] = useState([]);
+
+    const fetchStats = async () => {
+        try {
+            const [proto, ips, time] = await Promise.all([
+                axios.get('http://localhost:5000/api/stats/protocols'),
+                axios.get('http://localhost:5000/api/stats/top-ips'),
+                axios.get('http://localhost:5000/api/stats/traffic-time'),
+            ]);
+            setProtocolStats(proto.data);
+            setTopIPs(ips.data);
+            setTimeStats(time.data);
+        } catch (err) {
+            console.error('Lỗi khi lấy stats:', err);
+        }
+    };
+
+    useEffect(() => {
+        fetchStats(); // lấy ngay lần đầu
+
+        // Nếu đang capture → refresh mỗi 3 giây
+        if (!isCapturing) return;
+        const interval = setInterval(fetchStats, 3000);
+        return () => clearInterval(interval);
+    }, [isCapturing]);
+
+    return { protocolStats, topIPs, timeStats, fetchStats };
+}

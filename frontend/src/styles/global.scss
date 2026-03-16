@@ -1,0 +1,28 @@
+@use 'variables' as *;
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: $bg-primary;
+    color: $text-primary;
+    font-family: $font-main;
+    font-size: 14px;
+}
+
+::-webkit-scrollbar {
+    width: 6px;
+}
+::-webkit-scrollbar-track {
+    background: $bg-primary;
+}
+::-webkit-scrollbar-thumb {
+    background: $border-color;
+    border-radius: 3px;
+    &:hover {
+        background: $text-secondary;
+    }
+}

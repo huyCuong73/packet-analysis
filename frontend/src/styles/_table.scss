@@ -1,0 +1,99 @@
+@use 'variables' as *;
+
+.packet-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: $font-mono;
+    font-size: 13px;
+
+    // ── Header bảng ──────────────────────────────────────────────────
+    &__header {
+        position: sticky; // header cố định khi scroll
+        top: 0;
+        z-index: 10;
+
+        th {
+            background: $bg-tertiary;
+            color: $text-secondary;
+            padding: 8px 12px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 1px solid $border-color;
+            white-space: nowrap;
+
+            &:first-child {
+                width: 60px;
+            } // cột ID
+            &:nth-child(2) {
+                width: 90px;
+            } // cột Time
+            &:nth-child(3) {
+                width: 80px;
+            } // cột Protocol
+        }
+    }
+
+    // ── Từng dòng gói tin ─────────────────────────────────────────────
+    &__row {
+        border-bottom: 1px solid $border-color;
+        cursor: pointer;
+        transition: background 0.1s ease;
+
+        &:hover {
+            background: $bg-tertiary;
+        }
+
+        // Dòng đang được chọn
+        &--selected {
+            background: rgba(88, 166, 255, 0.1) !important;
+        }
+
+        td {
+            padding: 6px 12px;
+            color: $text-primary;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 200px;
+        }
+    }
+}
+
+// ── Badge màu cho từng protocol ───────────────────────────────────────
+.protocol-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: $radius-sm;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+
+    &--TCP {
+        background: rgba(88, 166, 255, 0.15);
+        color: $color-tcp;
+    }
+    &--UDP {
+        background: rgba(63, 185, 80, 0.15);
+        color: $color-udp;
+    }
+    &--DNS {
+        background: rgba(210, 168, 255, 0.15);
+        color: $color-dns;
+    }
+    &--HTTP {
+        background: rgba(255, 166, 87, 0.15);
+        color: $color-http;
+    }
+    &--ICMP {
+        background: rgba(121, 192, 255, 0.15);
+        color: $color-icmp;
+    }
+    &--ARP {
+        background: rgba(255, 123, 114, 0.15);
+        color: $color-arp;
+    }
+    &--OTHER {
+        background: rgba(139, 148, 158, 0.15);
+        color: $color-other;
+    }
+}

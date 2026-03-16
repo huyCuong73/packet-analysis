@@ -1,0 +1,143 @@
+@use 'variables' as *;
+
+.detail-panel {
+    background: $bg-secondary;
+    border: 1px solid $border-color;
+    border-radius: $radius-md;
+    overflow: hidden;
+    min-height: 400px;
+
+    // ── Tiêu đề panel ──────────────────────────────────────────────
+    &__title {
+        padding: 10px 16px;
+        background: $bg-tertiary;
+        border-bottom: 1px solid $border-color;
+        font-weight: 600;
+        color: $accent-blue;
+        font-size: 13px;
+    }
+
+    // ── Placeholder khi chưa chọn gói tin ───────────────────────────
+    &__placeholder {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 300px;
+        color: $text-secondary;
+        font-size: 13px;
+        text-align: center;
+    }
+
+    // ── Loading skeleton ────────────────────────────────────────────
+    &__skeleton {
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    // ── Từng section (Ethernet / IP / TCP...) ──────────────────────
+    &__section {
+        border-bottom: 1px solid $border-color;
+        &:last-child {
+            border-bottom: none;
+        }
+    }
+
+    &__section-header {
+        padding: 8px 16px;
+        background: rgba(88, 166, 255, 0.05);
+        font-weight: 600;
+        font-size: 12px;
+        color: $accent-blue;
+        cursor: pointer;
+        user-select: none;
+
+        &:hover {
+            background: rgba(88, 166, 255, 0.1);
+        }
+
+        // Icon mũi tên
+        &::before {
+            content: '▶ ';
+            font-size: 10px;
+            transition: transform 0.2s;
+        }
+        &--open::before {
+            content: '▼ ';
+        }
+    }
+
+    // ── Bảng các field ─────────────────────────────────────────────
+    &__fields {
+        padding: 4px 0;
+    }
+
+    &__field {
+        display: grid;
+        grid-template-columns: 180px 1fr;
+        padding: 4px 16px;
+        font-size: 12px;
+        font-family: $font-mono;
+
+        &:hover {
+            background: $bg-tertiary;
+        }
+
+        &-key {
+            color: $text-secondary;
+            padding-right: 12px;
+        }
+
+        &-value {
+            color: $text-primary;
+
+            // Màu đặc biệt cho 1 số giá trị
+            &--highlight {
+                color: $accent-yellow;
+            }
+            &--danger {
+                color: $accent-red;
+            }
+            &--ok {
+                color: $accent-green;
+            }
+        }
+    }
+
+    // ── Hex dump ───────────────────────────────────────────────────
+    &__hexdump {
+        padding: 8px 16px;
+        font-family: $font-mono;
+        font-size: 12px;
+        color: $text-secondary;
+        white-space: pre;
+        overflow-x: auto;
+        line-height: 1.6;
+    }
+}
+
+// ── Skeleton loading bars ───────────────────────────────────────────
+.skeleton-line {
+    height: 14px;
+    border-radius: 4px;
+    background: linear-gradient(
+        90deg,
+        $bg-tertiary 25%,
+        lighten($bg-tertiary, 5%) 50%,
+        $bg-tertiary 75%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.5s ease-in-out infinite;
+
+    &--w50 { width: 50%; }
+    &--w60 { width: 60%; }
+    &--w70 { width: 70%; }
+    &--w80 { width: 80%; }
+    &--w90 { width: 90%; }
+}
+
+@keyframes skeleton-shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
