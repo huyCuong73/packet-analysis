@@ -1,137 +1,272 @@
-from scapy.all import sniff, get_if_list, rdpcap, wrpcap, Packet
-from typing import Callable, List, Optional
-from datetime import datetime
+"""
+╔══════════════════════════════════════════════════════════════════╗
+║       PACKET CAPTURE — 100% Python thuần                        ║
+║  Raw socket (AF_PACKET) + PCAP file reader/writer               ║
+║  KHÔNG dùng Scapy                                               ║
+╚══════════════════════════════════════════════════════════════════╝
+"""
+
+import socket
+import struct
 import os
+import time
+import threading
+import fcntl
+from datetime import datetime
+from typing import Callable, List, Optional
+
 
 class PacketCapture:
     """
-    Class quản lý việc bắt gói tin.
-    
-    Tại sao dùng Class thay vì hàm đơn lẻ?
-    → Vì cần lưu trạng thái: danh sách gói đã bắt, 
-      đang chạy hay đã dừng, callback hiện tại là gì...
+    Class quản lý việc bắt gói tin bằng raw socket.
+
+    Trên Linux (WSL), sử dụng AF_PACKET + SOCK_RAW để nhận
+    toàn bộ raw Ethernet frame.
     """
 
     def __init__(self):
-        self.captured_packets: List[Packet] = []  # danh sách gói tin đã bắt
+        self.captured_packets: List[bytes] = []
         self.is_running = False
+        self._sock = None
 
-    # ─── 1. Liệt kê interface ─────────────────────────────────────────────
+    # ─── 1. Liệt kê interfaces ────────────────────────────────────────
 
     @staticmethod
-    def list_interfaces() -> List[str]:
-        """Trả về danh sách tất cả network interface trên máy"""
-        return get_if_list()
+    def list_interfaces() -> list:
+        """Liệt kê network interfaces từ /sys/class/net/"""
+        try:
+            interfaces = []
+            net_dir = "/sys/class/net/"
+            for iface in os.listdir(net_dir):
+                ip_addr = PacketCapture._get_iface_ip(iface)
+                interfaces.append({
+                    "name":        iface,
+                    "description": iface,
+                    "ip":          ip_addr,
+                    "mac":         PacketCapture._get_iface_mac(iface)
+                })
+            return interfaces
+        except Exception as e:
+            print(f"[!] Lỗi liệt kê interfaces: {e}")
+            return []
 
-    # ─── 2. Bắt gói tin trực tiếp (Live Capture) ─────────────────────────
+    @staticmethod
+    def _get_iface_ip(iface_name):
+        """Lấy IP address của interface bằng ioctl"""
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            ip = socket.inet_ntoa(fcntl.ioctl(
+                s.fileno(),
+                0x8915,  # SIOCGIFADDR
+                struct.pack('256s', iface_name.encode('utf-8')[:15])
+            )[20:24])
+            s.close()
+            return ip
+        except Exception:
+            return "N/A"
+
+    @staticmethod
+    def _get_iface_mac(iface_name):
+        """Lấy MAC address từ /sys/class/net/"""
+        try:
+            with open(f"/sys/class/net/{iface_name}/address") as f:
+                return f.read().strip()
+        except Exception:
+            return "N/A"
+
+    # ─── 2. Bắt gói tin trực tiếp (Raw Socket) ────────────────────────
 
     def start_live_capture(
         self,
-        interface: str        = None,
-        bpf_filter: str       = "",
-        count: int            = 0,
-        callback: Callable    = None
+        interface: str = None,
+        bpf_filter: str = "",
+        count: int = 0,
+        callback: Callable = None
     ):
         """
-        Bắt gói tin trực tiếp từ card mạng.
+        Bắt gói tin trực tiếp bằng raw socket AF_PACKET.
 
-        Tham số:
-        - interface : tên card mạng (None = tự chọn cái đầu tiên)
-        - bpf_filter: chuỗi lọc BPF, ví dụ "tcp port 80"
-        - count     : bắt bao nhiêu gói (0 = chạy mãi đến khi dừng)
-        - callback  : hàm xử lý mỗi khi có gói tin mới đến
+        AF_PACKET + SOCK_RAW nhận toàn bộ Ethernet frame,
+        bao gồm cả MAC header — đầy đủ nhất có thể.
+
+        Cần chạy với quyền root (sudo).
         """
         self.is_running = True
         self.captured_packets = []
 
-        def _internal_callback(packet):
-            # Lưu vào danh sách nội bộ
-            self.captured_packets.append(packet)
-            # Gọi hàm xử lý bên ngoài (ví dụ: analyze_packet)
-            if callback:
-                callback(packet)
-
-        print(f"[*] Bắt đầu live capture")
-        print(f"    Interface : {interface or 'auto'}")
-        print(f"    BPF Filter: '{bpf_filter}' " if bpf_filter else "    BPF Filter: (không có)")
-        print(f"    Count     : {count if count > 0 else 'không giới hạn'}")
-        print(f"    Nhấn Ctrl+C để dừng\n")
-
         try:
-            sniff(
-                iface=interface,
-                filter=bpf_filter,      # BPF filter truyền thẳng vào kernel
-                count=count,
-                prn=_internal_callback,
-                store=False             # không lưu trong bộ nhớ Scapy (đã tự lưu)
+            # ETH_P_ALL = 0x0003 → nhận mọi loại gói tin
+            self._sock = socket.socket(
+                socket.AF_PACKET,
+                socket.SOCK_RAW,
+                socket.ntohs(0x0003)
             )
-        except KeyboardInterrupt:
-            print("\n[!] Người dùng dừng capture.")
+
+            if interface:
+                self._sock.bind((interface, 0))
+
+            self._sock.settimeout(1.0)  # timeout để kiểm tra is_running
+
+            print(f"[*] Bắt đầu capture (Raw Socket)")
+            print(f"    Interface : {interface or 'tất cả'}")
+            print(f"    Nhấn Ctrl+C để dừng\n")
+
+            packet_count = 0
+
+            while self.is_running:
+                try:
+                    raw_data, addr = self._sock.recvfrom(65535)
+
+                    self.captured_packets.append(raw_data)
+                    packet_count += 1
+
+                    if callback:
+                        callback(raw_data)
+
+                    if count > 0 and packet_count >= count:
+                        break
+
+                except socket.timeout:
+                    continue
+                except KeyboardInterrupt:
+                    print("\n[!] Người dùng dừng capture.")
+                    break
+
+        except PermissionError:
+            print("[!] Cần quyền root. Chạy: sudo python server.py")
+        except Exception as e:
+            print(f"[!] Lỗi capture: {e}")
         finally:
             self.is_running = False
+            if self._sock:
+                self._sock.close()
+                self._sock = None
 
-    # ─── 3. Lưu gói tin ra file PCAP ──────────────────────────────────────
+    def stop(self):
+        """Dừng capture"""
+        self.is_running = False
 
-    def save_to_pcap(self, filepath: str = None) -> str:
+    # ─── 3. Đọc file PCAP ─────────────────────────────────────────────
+
+    @staticmethod
+    def load_from_pcap(filepath, callback=None) -> list:
         """
-        Lưu danh sách gói đã bắt ra file .pcap
-        
-        Nếu không truyền filepath → tự tạo tên theo timestamp
-        Ví dụ: captures/capture_14-32-01.pcap
+        Đọc file .pcap bằng Python thuần.
+
+        PCAP file format:
+        ┌────────────────────────┐
+        │ Global Header (24B)    │
+        ├────────────────────────┤
+        │ Packet Header (16B)    │
+        │ Packet Data            │
+        ├────────────────────────┤
+        │ Packet Header (16B)    │
+        │ Packet Data            │
+        ├────────────────────────┤
+        │ ...                    │
+        └────────────────────────┘
         """
-        if not self.captured_packets:
+        if not os.path.exists(filepath):
+            print(f"[!] Không tìm thấy file: {filepath}")
+            return []
+
+        packets = []
+
+        with open(filepath, 'rb') as f:
+            # ── Global Header (24 bytes) ──────────────────────────
+            global_header = f.read(24)
+            if len(global_header) < 24:
+                print("[!] File PCAP không hợp lệ (quá ngắn)")
+                return []
+
+            magic = struct.unpack('<I', global_header[:4])[0]
+
+            # Xác định byte order từ magic number
+            if magic == 0xa1b2c3d4:
+                endian = '<'  # Little-endian
+            elif magic == 0xd4c3b2a1:
+                endian = '>'  # Big-endian
+            else:
+                print(f"[!] File không phải PCAP (magic: {hex(magic)})")
+                return []
+
+            # ── Đọc từng packet ──────────────────────────────────
+            idx = 0
+            while True:
+                # Packet header (16 bytes)
+                pkt_header = f.read(16)
+                if len(pkt_header) < 16:
+                    break
+
+                ts_sec, ts_usec, incl_len, orig_len = \
+                    struct.unpack(f'{endian}IIII', pkt_header)
+
+                # Packet data
+                pkt_data = f.read(incl_len)
+                if len(pkt_data) < incl_len:
+                    break
+
+                packets.append(pkt_data)
+                idx += 1
+
+                if callback:
+                    callback(pkt_data)
+
+        print(f"[+] Đọc được {len(packets)} gói tin từ {filepath}")
+        return packets
+
+    # ─── 4. Ghi file PCAP ──────────────────────────────────────────────
+
+    @staticmethod
+    def save_to_pcap(packets, filepath=None) -> str:
+        """
+        Ghi danh sách raw packets ra file .pcap
+
+        PCAP Global Header:
+          magic_number  = 0xa1b2c3d4
+          version_major = 2
+          version_minor = 4
+          thiszone      = 0
+          sigfigs       = 0
+          snaplen       = 65535
+          network       = 1 (LINKTYPE_ETHERNET)
+        """
+        if not packets:
             print("[!] Không có gói tin nào để lưu.")
             return ""
 
-        # Tạo thư mục captures nếu chưa có
         os.makedirs("captures", exist_ok=True)
 
         if not filepath:
             timestamp = datetime.now().strftime("%Y%m%d_%H-%M-%S")
             filepath = f"captures/capture_{timestamp}.pcap"
 
-        wrpcap(filepath, self.captured_packets)
-        print(f"[+] Đã lưu {len(self.captured_packets)} gói tin → {filepath}")
+        with open(filepath, 'wb') as f:
+            # Global Header
+            f.write(struct.pack('<IHHIIII',
+                0xa1b2c3d4,  # magic
+                2,            # version major
+                4,            # version minor
+                0,            # thiszone
+                0,            # sigfigs
+                65535,        # snaplen
+                1             # LINKTYPE_ETHERNET
+            ))
+
+            # Packet records
+            now = int(time.time())
+            for pkt in packets:
+                pkt_len = len(pkt)
+                # Packet header: ts_sec, ts_usec, incl_len, orig_len
+                f.write(struct.pack('<IIII', now, 0, pkt_len, pkt_len))
+                f.write(pkt)
+
+        print(f"[+] Đã lưu {len(packets)} gói tin → {filepath}")
         return filepath
 
-    # ─── 4. Đọc file PCAP có sẵn ──────────────────────────────────────────
-
-    def load_from_pcap(
-        self,
-        filepath: str,
-        callback: Callable = None
-    ) -> List[Packet]:
-        """
-        Đọc file .pcap và phân tích từng gói tin.
-        
-        Tại sao cần tính năng này?
-        → Cho phép phân tích OFFLINE — không cần mạng.
-          Ví dụ: thầy giáo cho file pcap mẫu, bạn load vào phân tích.
-          Hoặc bắt gói lúc sáng, tối về ngồi phân tích lại.
-        """
-        if not os.path.exists(filepath):
-            print(f"[!] Không tìm thấy file: {filepath}")
-            return []
-
-        print(f"[*] Đang đọc file: {filepath}")
-        packets = rdpcap(filepath)
-        self.captured_packets = list(packets)
-
-        print(f"[+] Đọc được {len(packets)} gói tin từ file.\n")
-
-        # Nếu có callback thì xử lý từng gói
-        if callback:
-            for i, packet in enumerate(packets):
-                print(f"[{i+1}/{len(packets)}] ", end="")
-                callback(packet)
-
-        return self.captured_packets
-
-    # ─── 5. Thống kê nhanh ────────────────────────────────────────────────
-
+    # ─── 5. Thống kê nhanh ─────────────────────────────────────────────
 
     def get_summary(self) -> dict:
-        """Thống kê nhanh về số gói đã bắt"""
         return {
             "total":      len(self.captured_packets),
             "is_running": self.is_running

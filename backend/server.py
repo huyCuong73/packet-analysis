@@ -5,7 +5,6 @@ from werkzeug.utils import secure_filename
 from database import Database
 from analyzer.protocol import analyze_packet
 from sniffer.capture import PacketCapture
-from scapy.all import sniff
 import threading
 import os
 import queue
@@ -26,7 +25,6 @@ def _dns_worker():
             if ip is None: break
             
             try:
-                # Bỏ qua tra cứu các IP nội bộ / LAN để tăng tốc
                 if (ip.startswith("10.") or 
                     ip.startswith("192.168.") or 
                     ip.startswith("127.") or 
@@ -38,31 +36,42 @@ def _dns_worker():
                     _dns_cache[ip] = host
                     socketio.emit("dns_resolved", {"ip": ip, "domain": host})
             except Exception:
-                _dns_cache[ip] = ip  # Lỗi (không có DNS) thì gán lại IP mặc định
+                _dns_cache[ip] = ip
             
             _dns_queue.task_done()
         except Exception:
             pass
 
 threading.Thread(target=_dns_worker, daemon=True).start()
-# ────────────────────────────────────────────────────────────────────────
-
 
 db      = Database()
 capture = PacketCapture()
-_sniff_thread      = None
-_is_capturing      = False
-_current_session_id = None      # ← session đang chạy
-_current_session_name = ""      # ← tên session đang chạy
+_sniff_thread       = None
+_is_capturing       = False
+_current_session_id  = None
+_current_session_name = ""
 
 UPLOAD_FOLDER = "data/uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # ─── Xử lý gói tin ────────────────────────────────────────────────────────
 
-def process_packet(packet):
+def process_packet(raw_bytes):
+    """
+    Callback cho live capture.
+    Nhận raw bytes → phân tích → lọc loopback → lưu DB → emit WebSocket
+    """
     global _current_session_id
-    analyzed  = analyze_packet(packet)
+    analyzed  = analyze_packet(raw_bytes)
+
+    # ── Bỏ qua traffic nội bộ (Loopback) ──────────────────────────
+    ip = analyzed.get("ip", {})
+    src_ip = ip.get("src_ip", "")
+    dst_ip = ip.get("dst_ip", "")
+    if src_ip.startswith("127.") or dst_ip.startswith("127."):
+        return
+    # ──────────────────────────────────────────────────────────────
+
     packet_id = db.save_packet(analyzed, session_id=_current_session_id)
 
     ip = analyzed.get("ip", {})
@@ -97,7 +106,7 @@ def process_packet(packet):
         "credentials": credentials,
     })
 
-    # Xếp hàng tra cứu Tên miền (Reverse DNS) ngầm
+    # Xếp hàng tra cứu Reverse DNS
     for _ip in (ip.get("src_ip"), ip.get("dst_ip")):
         if _ip and _ip not in _dns_cache:
             _dns_cache[_ip] = "pending"
@@ -148,9 +157,8 @@ def delete_session(session_id):
 def upload_pcap():
     """
     Nhận file .pcap từ frontend,
-    đọc và phân tích từng gói tin,
-    lưu vào 1 session mới,
-    trả về danh sách gói tin đã phân tích.
+    đọc bằng PCAP reader thuần Python,
+    lưu vào 1 session mới.
     """
     if "file" not in request.files:
         return jsonify({"error": "Không có file"}), 400
@@ -165,19 +173,18 @@ def upload_pcap():
     filepath  = os.path.join(UPLOAD_FOLDER, filename)
     file.save(filepath)
 
-    # Tạo session mới cho file này
-    session_id = db.create_session(f"📂 {filename}")
+    # Tạo session mới
+    session_id = db.create_session(f"PCAP: {filename}")
 
-    # Đọc và phân tích từng gói tin
+    # Đọc bằng PCAP reader thuần Python
     try:
-        from scapy.all import rdpcap
-        packets = rdpcap(filepath)
+        packets = PacketCapture.load_from_pcap(filepath)
     except Exception as e:
         return jsonify({"error": f"Không đọc được file: {str(e)}"}), 400
 
     results = []
-    for packet in packets:
-        analyzed  = analyze_packet(packet)
+    for raw_bytes in packets:
+        analyzed  = analyze_packet(raw_bytes)
         packet_id = db.save_packet(analyzed, session_id=session_id)
 
         ip = analyzed.get("ip", {})
@@ -197,86 +204,37 @@ def upload_pcap():
             "service":  tr.get("service", "")
         })
 
-        # Cầm IP quăng cho DNS Worker xử lý
         for _ip in (ip.get("src_ip"), ip.get("dst_ip")):
             if _ip and _ip not in _dns_cache:
                 _dns_cache[_ip] = "pending"
                 _dns_queue.put(_ip)
 
-    # Xóa file tạm sau khi xử lý xong
     os.remove(filepath)
 
     return jsonify({
         "session_id":    session_id,
-        "session_name":  f"📂 {filename}",
+        "session_name":  f"PCAP: {filename}",
         "total_packets": len(results),
         "packets":       results
     })
 
 @app.route("/api/interfaces")
 def get_interfaces():
-    """
-    Trả về danh sách tất cả network interface trên máy
-    kèm thông tin IP nếu có.
-    """
-    from scapy.all import get_if_list, get_if_addr
-    
-    interfaces = []
-    for iface in get_if_list():
-        try:
-            ip = get_if_addr(iface)
-        except Exception:
-            ip = "N/A"
-
-        interfaces.append({
-            "name": iface,
-            "ip":   ip
-        })
-
+    """Trả về danh sách network interfaces"""
+    interfaces = PacketCapture.list_interfaces()
     return jsonify(interfaces)
-
-
 
 @app.route("/api/friendly-interfaces")
 def get_friendly_interfaces():
-    """
-    Trả về danh sách network interface kèm tên thân thiện.
-    Trên Windows, IFACES chứa: name, description, ip, mac...
-    """
-    from scapy.all import IFACES
-
-    interfaces = []
-    for iface_id, iface in IFACES.data.items():
-        try:
-            interfaces.append({
-                "name":        iface.name,             # tên gốc (dùng để truyền cho Scapy)
-                "description": iface.description or "", # "Intel Ethernet", "Wi-Fi"...
-                "ip":          iface.ip   or "",
-                "mac":         iface.mac  or "",
-            })
-        except Exception:
-            pass
-
+    """Trả về danh sách network interfaces kèm thông tin chi tiết"""
+    interfaces = PacketCapture.list_interfaces()
     return jsonify(interfaces)
-
-
-
-
-
-
-
-
-
-
-
-
 
 # ─── WebSocket ────────────────────────────────────────────────────────────
 
 @socketio.on("connect")
 def handle_connect():
     global _is_capturing, _current_session_id, _current_session_name
-    # Nếu đang capture thì báo ngay cho người mới vào biết
     if _is_capturing:
         socketio.emit("capture_status", {"status": "started"})
         if _current_session_id:
@@ -301,20 +259,52 @@ def handle_start(data):
         "name":       _current_session_name
     })
 
-    bpf_filter = data.get("filter",    "")
-    # None = Scapy tự chọn interface tốt nhất
-    iface      = data.get("interface") or None
+    iface = data.get("interface") or None
 
     def run_sniff():
-        sniff(
-            iface=iface,          # ← dùng interface được chọn
-            filter=bpf_filter,
-            prn=process_packet,
-            stop_filter=lambda p: not _is_capturing,
-            store=False
+        """Bắt gói tin bằng raw socket AF_PACKET"""
+        cap = PacketCapture()
+        cap.start_live_capture(
+            interface=iface,
+            callback=process_packet,
+            count=0  # liên tục cho đến khi dừng
         )
 
-    _sniff_thread = threading.Thread(target=run_sniff, daemon=True)
+    # Override is_running khi stop
+    def run_sniff_with_stop():
+        import socket as raw_socket
+
+        try:
+            sock = raw_socket.socket(
+                raw_socket.AF_PACKET,
+                raw_socket.SOCK_RAW,
+                raw_socket.ntohs(0x0003)
+            )
+            if iface:
+                sock.bind((iface, 0))
+            sock.settimeout(1.0)
+
+            while _is_capturing:
+                try:
+                    raw_data, addr = sock.recvfrom(65535)
+                    process_packet(raw_data)
+                except raw_socket.timeout:
+                    continue
+                except Exception as e:
+                    if _is_capturing:
+                        print(f"[!] Lỗi nhận gói: {e}")
+                    break
+        except PermissionError:
+            print("[!] Cần quyền root. Chạy: sudo python server.py")
+        except Exception as e:
+            print(f"[!] Lỗi capture: {e}")
+        finally:
+            try:
+                sock.close()
+            except:
+                pass
+
+    _sniff_thread = threading.Thread(target=run_sniff_with_stop, daemon=True)
     _sniff_thread.start()
     socketio.emit("capture_status", {"status": "started"})
 
@@ -326,15 +316,13 @@ def handle_stop():
 
 @socketio.on("disconnect")
 def handle_disconnect():
-    """
-    Khi user tắt tab hoặc F5, tự động dừng capture 
-    để tránh bị chạy ngầm vô hạn tải nặng máy.
-    """
     global _is_capturing
     if _is_capturing:
         _is_capturing = False
-        print("[!] Client ngắt kết nối -> Tự động dừng Capture chạy ngầm.")
+        print("[!] Client ngắt kết nối -> Tự động dừng Capture.")
 
 if __name__ == "__main__":
     print("[*] Server chạy tại http://localhost:5000")
+    print("[*] Backend: 100% Python thuần (Raw Socket + struct.unpack)")
+    print("[*] Cần quyền root để bắt gói tin: sudo python server.py")
     socketio.run(app, host="0.0.0.0", port=5000, debug=True)
