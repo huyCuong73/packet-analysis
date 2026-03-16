@@ -12,15 +12,20 @@ from analyzer.raw_parser import (
 from analyzer.app_layer import analyze_dns_raw, analyze_http_raw
 
 
-def analyze_packet(raw_bytes):
+def analyze_packet(raw_bytes, timestamp=None):
     """
     Hàm chính — parse raw bytes thành dict chứa đầy đủ thông tin.
 
     Input: raw_bytes (bytes) — raw frame từ AF_PACKET hoặc PCAP file
     Output: dict giống format cũ để frontend không cần thay đổi
     """
+    if timestamp is not None:
+        time_str = datetime.fromtimestamp(timestamp).strftime("%H:%M:%S.%f")[:-3]
+    else:
+        time_str = datetime.now().strftime("%H:%M:%S.%f")[:-3]
+
     result = {
-        "time":            datetime.now().strftime("%H:%M:%S.%f")[:-3],
+        "time":            time_str,
         "ethernet":        {},
         "ip":              {},
         "transport":       {},

@@ -23,10 +23,6 @@ export function useSocket() {
             setPackets((prev) => [packet, ...prev]);
         });
 
-        socket.on('arp_alert', (data) => {
-            setArpAlerts(prev => [data, ...prev].slice(0, 50))
-        })
-
         socket.on('capture_status', (data) => {
             const started = data.status === 'started';
             setIsCapturing(started);
@@ -61,7 +57,6 @@ export function useSocket() {
             socket.off('session_created');
             socket.off('dns_resolved');
             socket.off('replay_progress');
-            socket.off('arp_alert')
         };
     }, []);
 
@@ -86,6 +81,5 @@ export function useSocket() {
         isReplaying,
         setIsReplaying,
         replayProgress,
-        arpAlerts,
     };
 }

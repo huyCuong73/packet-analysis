@@ -16,6 +16,68 @@ from datetime import datetime
 from typing import Callable, List, Optional
 
 
+def _normalize_frame(buf, datalink):
+    """
+    Chuẩn hóa các datalink type khác nhau
+    về dạng Ethernet frame mà raw_parser hiểu được.
+
+    datalink types phổ biến:
+      1   = Ethernet (giữ nguyên)
+      113 = Linux Cooked Capture (SLL) — bỏ 16B header, thêm fake Ethernet
+      0   = BSD Loopback — bỏ 4B header
+      228 = Raw IPv4 — thêm fake Ethernet header
+    """
+    import struct
+
+    # Ethernet — giữ nguyên
+    if datalink == 1:
+        return buf
+
+    # Linux Cooked (SLL) — 16 byte header
+    # Structure: packet_type(2) + arphrd(2) + ll_addr_len(2)
+    #          + ll_addr(8) + proto(2)
+    elif datalink == 113:
+        if len(buf) < 16:
+            return None
+        proto = struct.unpack('!H', buf[14:16])[0]
+        payload = buf[16:]
+
+        # Tạo fake Ethernet header
+        fake_eth = (
+            b'\xff\xff\xff\xff\xff\xff' +  # dst MAC
+            b'\x00\x00\x00\x00\x00\x00' +  # src MAC
+            struct.pack('!H', proto)         # EtherType
+        )
+        return fake_eth + payload
+
+    # BSD Loopback — 4 byte header chứa AF family
+    elif datalink == 0:
+        if len(buf) < 4:
+            return None
+        af = struct.unpack('<I', buf[:4])[0]  # little-endian
+        payload = buf[4:]
+
+        # AF_INET = 2
+        if af == 2:
+            fake_eth = (
+                b'\xff\xff\xff\xff\xff\xff' +
+                b'\x00\x00\x00\x00\x00\x00' +
+                b'\x08\x00'  # IPv4
+            )
+            return fake_eth + payload
+
+    # Raw IPv4 — không có header, thêm fake Ethernet
+    elif datalink == 228:
+        fake_eth = (
+            b'\xff\xff\xff\xff\xff\xff' +
+            b'\x00\x00\x00\x00\x00\x00' +
+            b'\x08\x00'  # IPv4
+        )
+        return fake_eth + buf
+
+    # Datalink không hỗ trợ → bỏ qua
+    return None
+
 class PacketCapture:
     """
     Class quản lý việc bắt gói tin bằng raw socket.
@@ -173,7 +235,6 @@ class PacketCapture:
 
     @staticmethod
     def _load_pcapng(filepath, callback=None) -> list:
-        """Đọc file .pcapng bằng dpkt"""
         try:
             import dpkt
         except ImportError:
@@ -183,12 +244,19 @@ class PacketCapture:
         packets = []
         try:
             with open(filepath, 'rb') as f:
-                scanner = dpkt.pcapng.Scanner(f)
-                for ts, buf, datalink in scanner:
-                    packets.append(buf)
-                    if callback:
-                        callback(buf)
-            print(f"[+] Đọc được {len(packets)} gói tin từ {filepath} (pcapng)")
+                reader = dpkt.pcapng.Reader(f)
+                datalink = reader.datalink()
+                for ts, buf in reader:
+
+                    # Chuẩn hóa về Ethernet frame
+                    # để raw_parser đọc được bình thường
+                    normalized = _normalize_frame(buf, datalink)
+                    if normalized:
+                        packets.append((ts, normalized))
+                        if callback:
+                            callback((ts, normalized))
+
+            print(f"[+] Đọc được {len(packets)} gói từ {filepath} (pcapng)")
         except Exception as e:
             print(f"[!] Lỗi đọc pcapng: {e}")
 
@@ -196,7 +264,7 @@ class PacketCapture:
 
     
     @staticmethod
-    def load_from_pcap(filepath, callback=None) -> list:
+    def _load_pcap(filepath, callback=None) -> list:
         """
         Đọc file .pcap bằng Python thuần.
 
@@ -253,11 +321,12 @@ class PacketCapture:
                 if len(pkt_data) < incl_len:
                     break
 
-                packets.append(pkt_data)
+                ts = ts_sec + ts_usec / 1000000.0
+                packets.append((ts, pkt_data))
                 idx += 1
 
                 if callback:
-                    callback(pkt_data)
+                    callback((ts, pkt_data))
 
         print(f"[+] Đọc được {len(packets)} gói tin từ {filepath}")
         return packets
@@ -311,6 +380,7 @@ class PacketCapture:
         print(f"[+] Đã lưu {len(packets)} gói tin → {filepath}")
         return filepath
 
+    
     # ─── 5. Thống kê nhanh ─────────────────────────────────────────────
 
     def get_summary(self) -> dict:

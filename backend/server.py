@@ -246,8 +246,9 @@ def upload_pcap():
         return jsonify({"error": f"Không đọc được file: {str(e)}"}), 400
 
     results = []
-    for raw_bytes in packets:
-        analyzed  = analyze_packet(raw_bytes)
+    for pkt in packets:
+        ts_file, raw_bytes = pkt if isinstance(pkt, tuple) else (None, pkt)
+        analyzed  = analyze_packet(raw_bytes, timestamp=ts_file)
         packet_id = db.save_packet(analyzed, session_id=session_id)
 
         ip = analyzed.get("ip", {})
@@ -336,13 +337,32 @@ def replay_pcap():
     # Replay từng gói trong background thread
     def do_replay():
         import time as _time
-        delay = max(0.01, 0.1 / speed)  # delay giữa các gói
+        speed_factor = float(speed) if speed > 0 else 1.0
 
-        for i, raw_bytes in enumerate(packets):
+        last_ts = None
+
+        for i, pkt in enumerate(packets):
             if not _is_capturing:
                 break
 
-            analyzed = analyze_packet(raw_bytes)
+            ts_file, raw_bytes = pkt if isinstance(pkt, tuple) else (None, pkt)
+
+            if ts_file is not None and last_ts is not None:
+                delta = ts_file - last_ts
+                if delta > 0:
+                    delay = delta / speed_factor
+                    delay = min(delay, 5.0)  # Giới hạn delay tối đa là 5s
+                    _time.sleep(delay)
+                else:
+                    _time.sleep(0.001)
+            else:
+                delay = max(0.01, 0.1 / speed_factor)
+                _time.sleep(delay)
+
+            if ts_file is not None:
+                last_ts = ts_file
+
+            analyzed = analyze_packet(raw_bytes, timestamp=ts_file)
             packet_id = db.save_packet(analyzed, session_id=session_id)
 
             ip = analyzed.get("ip", {})
