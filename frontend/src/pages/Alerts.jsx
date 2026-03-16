@@ -75,6 +75,25 @@ function Alerts() {
                         ))}
                     </div>
                 )}
+
+                {arpAlerts.length > 0 && (
+                    <div style={{
+                        background: 'rgba(248, 81, 73, 0.1)',
+                        border: '2px solid #f85149',
+                        borderRadius: '8px',
+                        padding: '12px 16px',
+                        marginBottom: '16px'
+                    }}>
+                        <div style={{ color: '#f85149', fontWeight: 700, marginBottom: '8px' }}>
+                            🚨 Phát hiện ARP Spoofing!
+                        </div>
+                        {arpAlerts.map((alert, i) => (
+                            <div key={i} style={{ color: '#e6edf3', fontSize: '13px', marginTop: '4px' }}>
+                                ⚠️ [{alert.time}] {alert.message}
+                            </div>
+                        ))}
+                    </div>
+                )}
             </div>
         </div>
     );

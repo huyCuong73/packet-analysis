@@ -13,8 +13,8 @@ function PcapUploader({ onLoaded }) {
         if (!file) return;
 
         // Kiểm tra đuôi file
-        if (!file.name.endsWith('.pcap')) {
-            setError('Chỉ hỗ trợ file .pcap');
+        if (!file.name.endsWith('.pcap', '.pcapng')) {
+            setError('Chỉ hỗ trợ file .pcap hoặc .pcapng');
             return;
         }
 
@@ -84,7 +84,7 @@ function PcapUploader({ onLoaded }) {
                 <input
                     ref={inputRef}
                     type="file"
-                    accept=".pcap"
+                    accept=".pcap,.pcapng"
                     style={{ display: 'none' }}
                     onChange={(e) => handleFile(e.target.files[0])}
                 />

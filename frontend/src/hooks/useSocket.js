@@ -5,7 +5,7 @@ export function useSocket() {
     const [isConnected, setIsConnected] = useState(false);
     const [isCapturing, setIsCapturing] = useState(false);
     const [packets, setPackets] = useState([]);
-    const [currentSessionId, setCurrentSessionId] = useState(null); 
+    const [currentSessionId, setCurrentSessionId] = useState(null);
     const [currentSessionName, setCurrentSessionName] = useState('');
     const [dnsMap, setDnsMap] = useState({}); // Lịch sử DNS
     const [isReplaying, setIsReplaying] = useState(false);
@@ -22,6 +22,10 @@ export function useSocket() {
         socket.on('new_packet', (packet) => {
             setPackets((prev) => [packet, ...prev]);
         });
+
+        socket.on('arp_alert', (data) => {
+            setArpAlerts(prev => [data, ...prev].slice(0, 50))
+        })
 
         socket.on('capture_status', (data) => {
             const started = data.status === 'started';
@@ -57,6 +61,7 @@ export function useSocket() {
             socket.off('session_created');
             socket.off('dns_resolved');
             socket.off('replay_progress');
+            socket.off('arp_alert')
         };
     }, []);
 
@@ -81,5 +86,6 @@ export function useSocket() {
         isReplaying,
         setIsReplaying,
         replayProgress,
+        arpAlerts,
     };
 }

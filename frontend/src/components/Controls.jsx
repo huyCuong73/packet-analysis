@@ -110,7 +110,7 @@ function Controls({
 			<input
 				ref={replayInputRef}
 				type="file"
-				accept=".pcap"
+				accept=".pcap,.pcapng"
 				style={{ display: 'none' }}
 				onChange={handleFileSelected}
 			/>
