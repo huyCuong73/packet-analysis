@@ -3,9 +3,7 @@ import json
 import os
 from datetime import datetime
 
-
 class SafeEncoder(json.JSONEncoder):
-    """Xử lý các kiểu dữ liệu không serialize được (bytes, set...)"""
     def default(self, obj):
         if isinstance(obj, bytes):
             return obj.hex()
@@ -62,11 +60,6 @@ class Database:
         self.conn.commit()
 
     def _migrate(self):
-        """
-        Thêm cột session_id vào bảng cũ nếu chưa có.
-        Dùng try/except vì SQLite không hỗ trợ
-        'ADD COLUMN IF NOT EXISTS'
-        """
         for sql in [
             "ALTER TABLE packets ADD COLUMN session_id INTEGER",
             "ALTER TABLE alerts  ADD COLUMN session_id INTEGER"
@@ -75,12 +68,9 @@ class Database:
                 self.conn.execute(sql)
                 self.conn.commit()
             except Exception:
-                pass  # cột đã tồn tại → bỏ qua
-
-    # ─── Session ──────────────────────────────────────────────────────────
+                pass
 
     def create_session(self, name: str = None) -> int:
-        """Tạo phiên mới, trả về session_id"""
         if not name:
             name = f"Session {datetime.now().strftime('%d/%m %H:%M:%S')}"
 
@@ -93,7 +83,6 @@ class Database:
         return cursor.lastrowid
 
     def get_sessions(self) -> list:
-        """Lấy danh sách tất cả phiên, mới nhất trước"""
         cursor = self.conn.execute("""
             SELECT s.id, s.name, s.created_at,
                    COUNT(p.id) as packet_count
@@ -105,7 +94,6 @@ class Database:
         return [dict(row) for row in cursor.fetchall()]
 
     def delete_session(self, session_id: int):
-        """Xóa 1 phiên và toàn bộ gói tin + alert của phiên đó"""
         self.conn.executescript(f"""
             DELETE FROM packets WHERE session_id = {session_id};
             DELETE FROM alerts  WHERE session_id = {session_id};
@@ -113,8 +101,6 @@ class Database:
         """)
         self.conn.commit()
         print(f"[+] Đã xóa phiên id={session_id}")
-
-    # ─── Lưu dữ liệu ──────────────────────────────────────────────────────
 
     def save_packet(self, analyzed: dict, session_id: int = None) -> int:
         ip = analyzed.get("ip", {})
@@ -153,8 +139,6 @@ class Database:
             alert_type, message, src_ip
         ))
         self.conn.commit()
-
-    # ─── Đọc dữ liệu ──────────────────────────────────────────────────────
 
     def get_recent_packets(self, limit: int = 100,
                            session_id: int = None) -> list:

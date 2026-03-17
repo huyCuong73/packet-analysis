@@ -7,7 +7,7 @@ export function useSocket() {
     const [packets, setPackets] = useState([]);
     const [currentSessionId, setCurrentSessionId] = useState(null);
     const [currentSessionName, setCurrentSessionName] = useState('');
-    const [dnsMap, setDnsMap] = useState({}); // Lịch sử DNS
+    const [dnsMap, setDnsMap] = useState({}); 
     const [isReplaying, setIsReplaying] = useState(false);
     const [replayProgress, setReplayProgress] = useState(0);
 
@@ -32,13 +32,11 @@ export function useSocket() {
             }
         });
 
-        // Lắng nghe session mới được tạo
         socket.on('session_created', (data) => {
             setCurrentSessionId(data.session_id);
             setCurrentSessionName(data.name);
         });
 
-        // Lắng nghe progress replay
         socket.on('replay_progress', (data) => {
             setReplayProgress(data.progress);
             if (data.progress === 100) {

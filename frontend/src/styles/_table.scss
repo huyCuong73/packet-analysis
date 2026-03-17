@@ -6,9 +6,8 @@
     font-family: $font-mono;
     font-size: 13px;
 
-    // ── Header bảng ──────────────────────────────────────────────────
     &__header {
-        position: sticky; // header cố định khi scroll
+        position: sticky;
         top: 0;
         z-index: 10;
 
@@ -23,17 +22,16 @@
 
             &:first-child {
                 width: 60px;
-            } // cột ID
+            }
             &:nth-child(2) {
                 width: 90px;
-            } // cột Time
+            }
             &:nth-child(3) {
                 width: 80px;
-            } // cột Protocol
+            }
         }
     }
 
-    // ── Từng dòng gói tin ─────────────────────────────────────────────
     &__row {
         border-bottom: 1px solid $border-color;
         cursor: pointer;
@@ -43,7 +41,6 @@
             background: $bg-tertiary;
         }
 
-        // Dòng đang được chọn
         &--selected {
             background: rgba(88, 166, 255, 0.1) !important;
         }
@@ -59,7 +56,6 @@
     }
 }
 
-// ── Badge màu cho từng protocol ───────────────────────────────────────
 .protocol-badge {
     display: inline-block;
     padding: 2px 8px;

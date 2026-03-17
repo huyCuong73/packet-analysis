@@ -32,7 +32,6 @@ const TimeChart = memo(function TimeChart({ data }) {
                     dataKey="time"
                     tick={{ fill: '#8b949e', fontSize: 10 }}
                     axisLine={{ stroke: '#30363d' }}
-                    // Chỉ hiện mỗi 5 nhãn để tránh chật
                     interval="preserveStartEnd"
                 />
                 <YAxis
@@ -53,7 +52,7 @@ const TimeChart = memo(function TimeChart({ data }) {
                     dataKey="count"
                     stroke="#58a6ff"
                     strokeWidth={2}
-                    dot={false} // không hiện chấm tròn — trông gọn hơn
+                    dot={false}
                     activeDot={{ r: 4, fill: '#58a6ff' }}
                     isAnimationActive={false}
                 />

@@ -1,27 +1,27 @@
 import { useMemo } from 'react'
 import { Trophy, BarChart2, Copy } from 'lucide-react'
 
-// Màu sắc theo mức độ băng thông
+
 function _getColor(mb, maxMB) {
     const ratio = maxMB > 0 ? mb / maxMB : 0
-    if (ratio > 0.75) return '#f85149'  // đỏ   — ngốn nhiều nhất
-    if (ratio > 0.40) return '#e3b341'  // vàng  — trung bình
-    return '#3fb950'                    // xanh  — bình thường
+    if (ratio > 0.75) return '#f85149'  
+    if (ratio > 0.40) return '#e3b341'  
+    return '#3fb950'                    
 }
 
-// Rút gọn IP dài
+
 function _shortIP(ip, domain) {
     if (domain) {
         const shortDom = domain.length > 30 ? domain.substring(0, 30) + '...' : domain;
         return `${ip} (${shortDom})`;
     }
     if (!ip) return '?'
-    // IPv6 rút gọn
+   
     if (ip.includes(':')) return ip.substring(0, 12) + '...'
     return ip
 }
 
-// Format số bytes cho dễ đọc
+
 function _formatBytes(bytes) {
     if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(2)} MB`
     if (bytes >= 1024) return `${(bytes / 1024).toFixed(1)} KB`

@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 
-// Hook này gọi API để lấy dữ liệu thống kê
-// Tự động refresh mỗi 3 giây khi đang capture
 export function useStats(isCapturing) {
     const [protocolStats, setProtocolStats] = useState([]);
     const [topIPs, setTopIPs] = useState([]);
@@ -24,9 +22,8 @@ export function useStats(isCapturing) {
     };
 
     useEffect(() => {
-        fetchStats(); // lấy ngay lần đầu
+        fetchStats();
 
-        // Nếu đang capture → refresh mỗi 3 giây
         if (!isCapturing) return;
         const interval = setInterval(fetchStats, 3000);
         return () => clearInterval(interval);

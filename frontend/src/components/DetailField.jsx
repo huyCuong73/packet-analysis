@@ -1,5 +1,4 @@
 function DetailField({ label, value, highlight }) {
-    // Tự động chọn màu dựa vào giá trị
     const getValueClass = () => {
         if (highlight === 'danger') return 'detail-panel__field-value--danger';
         if (highlight === 'ok') return 'detail-panel__field-value--ok';

@@ -6,7 +6,6 @@
     gap: 12px;
     margin-bottom: 12px;
 
-    // Trên màn hình nhỏ → xếp dọc
     @media (max-width: 1024px) {
         grid-template-columns: 1fr;
     }

@@ -1,19 +1,9 @@
 import React, { memo, useRef, useEffect } from 'react'
 import { Search, Clock, Activity, Globe, Copy } from 'lucide-react'
 
-/**
- * DNS Resolution Timeline — Dòng thời gian Truy vấn Tên miền
- * 
- * Bắt trọn mọi gói DNS Query (UDP Port 53) từ datagrid.
- * Mỗi dòng hiển thị: Thời gian | IP Nguồn | Tên miền được truy vấn
- * 
- * Đây là "Bằng chứng 100%" cho thấy ứng dụng nào trên máy
- * đang lén lút truy cập trang web/tên miền nào sau lưng người dùng.
- */
 const DnsTimelineChart = memo(function DnsTimelineChart({ data = [] }) {
     const bottomRef = useRef(null)
 
-    // Auto-scroll xuống dòng mới nhất
     useEffect(() => {
         if (bottomRef.current) {
             bottomRef.current.scrollIntoView({ behavior: 'smooth' })

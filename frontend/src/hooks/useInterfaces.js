@@ -14,7 +14,6 @@ export function useInterfaces() {
             );
             setInterfaces(res.data);
 
-            // Mặc định chọn "auto" (null = Scapy tự chọn)
             setSelectedInterface('auto');
         } catch (err) {
             console.error('Lỗi lấy interfaces:', err);

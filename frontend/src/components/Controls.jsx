@@ -8,14 +8,13 @@ function Controls({
 	onStart, onStop, onClear,
 	currentSessionName,
 	onUploadPcap, isPcapMode, onExitPcap,
-	// ── Props mới cho replay ──
 	onReplay,
 	isReplaying,
 	replayProgress
 }) {
 	const [filter, setFilter] = useState('')
 	const [speed, setSpeed] = useState('1')
-	const replayInputRef = useRef()   // input file ẩn
+	const replayInputRef = useRef()
 
 	const {
 		interfaces, selectedInterface,
@@ -27,12 +26,11 @@ function Controls({
 		onStart(filter, '', iface)
 	}
 
-	// Khi chọn file xong → gửi lên backend
+
 	const handleFileSelected = (e) => {
 		const file = e.target.files[0]
 		if (!file) return
 		onReplay(file, parseFloat(speed))
-		// Reset input để có thể chọn lại cùng file
 		e.target.value = ''
 	}
 
@@ -41,7 +39,7 @@ function Controls({
 	return (
 		<div className="controls">
 
-			{/* Interface selector */}
+
 			<InterfaceSelector
 				interfaces={interfaces}
 				value={selectedInterface}
@@ -50,7 +48,6 @@ function Controls({
 				loading={loading}
 			/>
 
-			{/* BPF Filter */}
 			<span className="controls__label">Filter:</span>
 			<input
 				className="controls__filter-input"
@@ -64,7 +61,7 @@ function Controls({
 				disabled={isBusy}
 			/>
 
-			{/* Bắt đầu */}
+
 			<button className="btn btn--start"
 				onClick={handleStart}
 				disabled={!isConnected || isBusy}
@@ -72,7 +69,7 @@ function Controls({
 				<Play size={14} /> Bắt đầu
 			</button>
 
-			{/* Dừng */}
+
 			<button className="btn btn--stop"
 				onClick={onStop}
 				disabled={!isCapturing && !isReplaying}
@@ -80,8 +77,7 @@ function Controls({
 				<Square size={14} /> Dừng
 			</button>
 
-			{/* ── Replay section ──────────────────────────────────────── */}
-			{/* Chọn tốc độ */}
+
 			<select
 				className="speed-select"
 				value={speed}
@@ -89,15 +85,15 @@ function Controls({
 				disabled={isBusy}
 				title="Tốc độ replay"
 			>
-				<option value="0.5">🐢 0.5x</option>
-				<option value="1">▶ 1x</option>
-				<option value="2">⚡ 2x</option>
-				<option value="5">🚀 5x</option>
-				<option value="10">⚡ 10x</option>
-				<option value="20">💨 20x</option>
+				<option value="0.5">0.5x</option>
+				<option value="1">1x</option>
+				<option value="2">2x</option>
+				<option value="5">5x</option>
+				<option value="10">10x</option>
+				<option value="20">20x</option>
 			</select>
 
-			{/* Nút Replay — click → mở file picker */}
+
 			<button
 				className="btn btn--clear"
 				onClick={() => replayInputRef.current.click()}
@@ -108,7 +104,7 @@ function Controls({
 				<PlaySquare size={14} /> Replay .pcap
 			</button>
 
-			{/* Input file ẩn */}
+
 			<input
 				ref={replayInputRef}
 				type="file"
@@ -117,7 +113,7 @@ function Controls({
 				onChange={handleFileSelected}
 			/>
 
-			{/* Progress replay */}
+
 			{isReplaying && (
 				<div style={{
 					display: 'flex',
@@ -148,7 +144,7 @@ function Controls({
 				</div>
 			)}
 
-			{/* Mở PCAP */}
+
 			<button className="btn btn--clear"
 				onClick={onUploadPcap}
 				disabled={isBusy}
@@ -164,7 +160,7 @@ function Controls({
 				</button>
 			)}
 
-			{/* Xóa */}
+
 			<button className="btn btn--clear"
 				onClick={onClear}
 				disabled={isBusy}
@@ -172,7 +168,7 @@ function Controls({
 				<Trash2 size={14} /> Xóa
 			</button>
 
-			{/* Đếm gói tin */}
+
 			<span className="controls__count" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
 				{isReplaying && (
 					<span style={{ color: '#d2a8ff', marginRight: '8px', display: 'flex', alignItems: 'center', gap: '4px' }}>

@@ -9,7 +9,6 @@ function PacketDetail({ packetId }) {
     const [detail, setDetail] = useState(null);
     const [loading, setLoading] = useState(false);
 
-    // Mỗi khi packetId thay đổi → gọi API lấy chi tiết
     useEffect(() => {
         if (!packetId) return;
 
@@ -21,7 +20,6 @@ function PacketDetail({ packetId }) {
             .finally(() => setLoading(false));
     }, [packetId]);
 
-    // ── Luôn render khung cố định ─────────────────────────────────
     const eth = detail?.ethernet || {};
     const ip = detail?.ip || {};
     const tr = detail?.transport || {};
@@ -40,16 +38,14 @@ function PacketDetail({ packetId }) {
                       : <><Package size={18} /> Chi tiết gói tin</>}
             </div>
 
-            {/* ── Khu vực nội dung có thể cuộn ────────────────────────────── */}
             <div className="detail-panel__content">
-                {/* Placeholder khi chưa chọn gói tin */}
+              
                 {!hasData && !loading && (
                     <div className="detail-panel__placeholder">
                         Click vào 1 gói tin để xem chi tiết
                     </div>
                 )}
 
-                {/* Loading skeleton */}
                 {loading && (
                     <div className="detail-panel__skeleton">
                         <div className="skeleton-line skeleton-line--w80" />
@@ -61,10 +57,8 @@ function PacketDetail({ packetId }) {
                     </div>
                 )}
 
-                {/* ── Dữ liệu thực ─────────────────────────────────────── */}
                 {hasData && (
                     <>
-                    {/* Tầng Ethernet */}
                     {eth.src_mac && (
                         <DetailSection title="Ethernet Header (Tầng liên kết dữ liệu)">
                             <DetailField label="MAC nguồn" value={eth.src_mac} />
@@ -76,7 +70,6 @@ function PacketDetail({ packetId }) {
                         </DetailSection>
                     )}
 
-                    {/* Tầng IP */}
                     {ip.src_ip && (
                         <DetailSection title="IP Header (Tầng mạng)">
                             <DetailField label="Phiên bản" value={`IPv${ip.version}`} />
@@ -104,7 +97,6 @@ function PacketDetail({ packetId }) {
                         </DetailSection>
                     )}
 
-                    {/* Tầng TCP */}
                     {detail.transport_proto === 'TCP' && tr.src_port && (
                         <DetailSection title="TCP Header (Tầng vận chuyển)">
                             <DetailField label="Cổng nguồn" value={tr.src_port} />
@@ -134,7 +126,6 @@ function PacketDetail({ packetId }) {
                         </DetailSection>
                     )}
 
-                    {/* Tầng UDP */}
                     {detail.transport_proto === 'UDP' && tr.src_port && (
                         <DetailSection title="UDP Header (Tầng vận chuyển)">
                             <DetailField label="Cổng nguồn" value={tr.src_port} />
@@ -147,7 +138,6 @@ function PacketDetail({ packetId }) {
                         </DetailSection>
                     )}
 
-                    {/* DNS */}
                     {app.dns && (
                         <DetailSection title="DNS (Tầng ứng dụng)">
                             <DetailField label="Loại" value={app.dns.type} />
@@ -170,7 +160,6 @@ function PacketDetail({ packetId }) {
                         </DetailSection>
                     )}
 
-                    {/* HTTP */}
                     {app.http && (
                         <DetailSection title="HTTP (Tầng ứng dụng)">
                             {app.http.direction === 'request' ? (
@@ -215,7 +204,6 @@ function PacketDetail({ packetId }) {
                         </DetailSection>
                     )}
 
-                    {/* Hex Dump */}
                     {pay.hex_dump && (
                         <DetailSection title="Payload (Hex Dump)" defaultOpen={false}>
                             <pre className="detail-panel__hexdump">{pay.hex_dump}</pre>

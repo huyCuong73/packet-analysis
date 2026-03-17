@@ -7,7 +7,6 @@
 	flex-direction: column;
 }
 
-// ── Header trên cùng ───────────────────────────────────────────────
 .navbar {
 	display: flex;
 	align-items: center;
@@ -55,7 +54,6 @@
 
 			&--connected {
 				background: $accent-green;
-				// Hiệu ứng nhấp nháy khi connected
 				animation: pulse 2s infinite;
 			}
 		}
@@ -74,7 +72,6 @@
 	}
 }
 
-// ── Thanh điều khiển ───────────────────────────────────────────────
 .controls {
 	display: flex;
 	align-items: center;
@@ -117,7 +114,6 @@
 	}
 }
 
-// ── Các nút bấm ────────────────────────────────────────────────────
 .btn {
 	padding: 6px 16px;
 	border: none;
@@ -135,16 +131,11 @@
 	&--start {
 		background: $accent-green;
 		color: #000;
-
-		&:hover:not(:disabled) {
-			// background: lighten($accent-green, 8%);
-		}
 	}
 
 	&--stop {
 		background: $accent-red;
 		color: #fff;
-		// &:hover:not(:disabled) { background: lighten($accent-red, 8%); }
 	}
 
 	&--clear {
@@ -159,32 +150,28 @@
 	}
 }
 
-// ── Nội dung chính ─────────────────────────────────────────────────
 .main-content {
 	flex: 1;
-	min-height: 0; // Quan trọng để flex child không vượt parent
+	min-height: 0;
 	padding: 16px 24px;
-	padding-bottom: 60px; // Thêm nhiều khoảng trống hơn ở đáy
+	padding-bottom: 60px;
 	display: flex;
 	flex-direction: column;
 	gap: 12px;
-	// Bỏ overflow: hidden để trang có thể scroll xuống dưới
 }
 
-// ── Hàng chứa bảng + chi tiết ──────────────────────────────────────
 .packet-row {
 	display: flex;
 	gap: 12px;
-	align-items: stretch; // Bắt buộc stretch để 2 cột cao bằng nhau
-	flex: none; // Không dùng flex-grow
-	height: 500px; // Cố định chiều cao 500px theo yêu cầu
+	align-items: stretch;
+	flex: none;
+	height: 500px;
 
 	.table-section {
 		flex: 3;
 		min-width: 0;
-		height: 100%; // Theo chiều cao thẻ cha
+		height: 100%;
 
-		// Thêm flex để chia bảng và filter bar
 		display: flex;
 		flex-direction: column;
 	}
@@ -194,11 +181,10 @@
 		margin-top: 0;
 		position: sticky;
 		top: 64px;
-		height: 100%; // Theo chiều cao thẻ cha
+		height: 100%;
 	}
 }
 
-//bảng + detail
 .table-section {
 	background: $bg-secondary;
 	border: 1px solid $border-color;
@@ -264,7 +250,6 @@
 	}
 }
 
-// ── Filter Bar ──────────────────────────────────────────────────────
 .filter-bar {
 	display: flex;
 	align-items: center;

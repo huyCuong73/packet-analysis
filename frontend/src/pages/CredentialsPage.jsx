@@ -6,34 +6,29 @@ function CredentialsPage({ socket }) {
     const { packets, setSelectedId } = socket
     const [filterText, setFilterText] = useState('')
 
-    // Trích xuất credentials từ toàn bộ packets
     const credentialsList = useMemo(() => {
         return packets
             .filter(pkt => pkt.credentials && pkt.credentials.length > 0)
             .map(pkt => ({
-                id:          pkt.id,
-                time:        pkt.time,
-                src_ip:      pkt.src_ip || '',
-                dst_ip:      pkt.dst_ip || '',
-                credentials: pkt.credentials // [{'type': 'username', 'value': 'admin'}, ...]
+                id: pkt.id,
+                time: pkt.time,
+                src_ip: pkt.src_ip || '',
+                dst_ip: pkt.dst_ip || '',
+                credentials: pkt.credentials
             }))
-            .reverse() // Mới nhất lên đầu
+            .reverse()
     }, [packets])
 
-    // Lọc theo search box
     const filteredList = useMemo(() => {
         if (!filterText) return credentialsList
         const q = filterText.toLowerCase()
         return credentialsList.filter(e => {
-            // Tìm theo IP nguồn, đích
             if (e.src_ip.toLowerCase().includes(q) || e.dst_ip.toLowerCase().includes(q)) return true
-            
-            // Tìm trong username / password bị lộ
+
             return e.credentials.some(c => c.value.toLowerCase().includes(q))
         })
     }, [credentialsList, filterText])
 
-    // Thống kê nhanh
     const stats = useMemo(() => {
         const uniqueSrc = new Set(credentialsList.map(e => e.src_ip)).size
         const uniqueDst = new Set(credentialsList.map(e => e.dst_ip)).size
@@ -42,18 +37,17 @@ function CredentialsPage({ socket }) {
 
     return (
         <div className="page-content" style={{ padding: '16px' }}>
-            {/* Header */}
             <div style={{ marginBottom: '24px' }}>
-                <h2 style={{ 
-                    fontSize: '20px', 
-                    fontWeight: 700, 
-                    color: '#f85149', 
+                <h2 style={{
+                    fontSize: '20px',
+                    fontWeight: 700,
+                    color: '#f85149',
                     margin: 0,
                     display: 'flex',
                     alignItems: 'center',
                     gap: '8px'
                 }}>
-                    🚨 Báo cáo Rò rỉ Thông tin Đăng nhập
+                    Báo cáo Rò rỉ Thông tin Đăng nhập
                 </h2>
                 <p style={{ color: '#8b949e', fontSize: '13px', marginTop: '6px' }}>
                     Danh sách các tài khoản (Username/Password) bị đánh cắp do hệ thống phát hiện chúng được truyền đi
@@ -61,7 +55,6 @@ function CredentialsPage({ socket }) {
                 </p>
             </div>
 
-            {/* Stats & Search Bar */}
             <div style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -113,7 +106,6 @@ function CredentialsPage({ socket }) {
                 </div>
             </div>
 
-            {/* Bảng Chi tiết */}
             <div style={{
                 background: '#0d1117',
                 border: '1px solid #f85149',
@@ -139,9 +131,9 @@ function CredentialsPage({ socket }) {
                 </div>
 
                 <div style={{ maxHeight: 'calc(100vh - 350px)', overflowY: 'auto' }}>
-                    <CredentialsTable 
-                        data={filteredList} 
-                        onSelectPacket={setSelectedId} 
+                    <CredentialsTable
+                        data={filteredList}
+                        onSelectPacket={setSelectedId}
                     />
                 </div>
             </div>

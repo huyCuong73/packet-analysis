@@ -25,7 +25,6 @@ const TrafficLocationChart = memo(function TrafficLocationChart({ data = [] }) {
 
     return (
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            {/* Donut chart */}
             <ResponsiveContainer width="50%" height={180}>
                 <PieChart>
                     <Pie
@@ -57,7 +56,6 @@ const TrafficLocationChart = memo(function TrafficLocationChart({ data = [] }) {
                 </PieChart>
             </ResponsiveContainer>
 
-            {/* Legend tùy chỉnh */}
             <div style={{ flex: 1 }}>
                 {data.map((d, i) => (
                     <div key={i} style={{

@@ -13,7 +13,6 @@ function PacketTable({ packets, selectedId, onSelectPacket, dnsMap = {} }) {
     return (
         <div style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
             <table className="packet-table">
-                {/* Header */}
                 <thead className="packet-table__header">
                     <tr>
                         <th>#</th>
@@ -29,7 +28,6 @@ function PacketTable({ packets, selectedId, onSelectPacket, dnsMap = {} }) {
                     </tr>
                 </thead>
 
-                {/* Các dòng gói tin */}
                 <tbody>
                     {packets.map((packet) => (
                         <tr
@@ -91,7 +89,6 @@ function PacketTable({ packets, selectedId, onSelectPacket, dnsMap = {} }) {
                         </tr>
                     ))}
 
-                    {/* Khi chưa có gói tin nào */}
                     {packets.length === 0 && (
                         <tr>
                             <td

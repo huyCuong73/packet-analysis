@@ -15,13 +15,10 @@ function InterfaceSelector({ interfaces, value, onChange, disabled, loading }) {
             disabled={disabled}
             title="Chọn interface mạng"
         >
-            {/* Option mặc định — để Scapy tự chọn */}
             <option value="auto">🔀 Auto</option>
 
             {interfaces.map((iface) => (
                 <option key={iface.name} value={iface.name}>
-                    {/* Rút gọn tên interface dài trên Windows */}
-                    {/* {_shortName(iface.name)} */}
                     {iface.description || iface.name}
                     {iface.ip && iface.ip !== '0.0.0.0' ? ` — ${iface.ip}` : ''}
                 </option>
@@ -30,8 +27,6 @@ function InterfaceSelector({ interfaces, value, onChange, disabled, loading }) {
     );
 }
 
-// Rút gọn tên interface dài của Windows
-// "\Device\NPF_{GUID-DÀI}" → "NPF_{GUID}"
 function _shortName(name) {
     if (name.includes('NPF_')) {
         const parts = name.split('NPF_');

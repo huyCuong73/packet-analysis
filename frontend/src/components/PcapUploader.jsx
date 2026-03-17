@@ -12,8 +12,7 @@ function PcapUploader({ onLoaded }) {
     const handleFile = async (file) => {
         if (!file) return;
 
-        // Kiểm tra đuôi file
-        if (!file.name.endsWith('.pcap', '.pcapng')) {
+        if (!file.name.endsWith('.pcap') && !file.name.endsWith('.pcapng')) {
             setError('Chỉ hỗ trợ file .pcap hoặc .pcapng');
             return;
         }
@@ -34,7 +33,6 @@ function PcapUploader({ onLoaded }) {
             );
             setProgress(100);
 
-            // Gọi callback để Dashboard nhận dữ liệu
             onLoaded({
                 sessionId: res.data.session_id,
                 sessionName: res.data.session_name,
@@ -49,7 +47,6 @@ function PcapUploader({ onLoaded }) {
         }
     };
 
-    // Kéo thả file
     const handleDrop = (e) => {
         e.preventDefault();
         setIsDragOver(false);
@@ -59,7 +56,6 @@ function PcapUploader({ onLoaded }) {
 
     return (
         <div>
-            {/* Vùng kéo thả */}
             <div
                 className={`upload-zone ${isDragOver ? 'upload-zone--dragover' : ''}`}
                 onClick={() => inputRef.current.click()}
@@ -80,7 +76,6 @@ function PcapUploader({ onLoaded }) {
                 </div>
                 <div className="upload-zone__hint">Hỗ trợ định dạng: .pcap</div>
 
-                {/* Input ẩn */}
                 <input
                     ref={inputRef}
                     type="file"
@@ -90,7 +85,6 @@ function PcapUploader({ onLoaded }) {
                 />
             </div>
 
-            {/* Progress bar */}
             {progress > 0 && (
                 <div className="upload-progress">
                     <div
@@ -100,7 +94,6 @@ function PcapUploader({ onLoaded }) {
                 </div>
             )}
 
-            {/* Thông báo lỗi */}
             {error && (
                 <div
                     style={{

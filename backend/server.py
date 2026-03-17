@@ -14,23 +14,15 @@ app      = Flask(__name__)
 CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True)
 socketio = SocketIO(app, cors_allowed_origins="*")
 
-# ─── DNS RESOLVER NGẦM ────────────────────────────────────────────────────
 _dns_queue = queue.Queue()
 _dns_cache = {}
 
-_arp_table = {}   # { ip: mac } — bảng ARP đã biết
+_arp_table = {}   
 
 def _check_arp_spoofing(analyzed):
-    """
-    Phát hiện ARP Spoofing bằng cách theo dõi
-    sự thay đổi bất thường của IP → MAC mapping.
-    """
     global _arp_table
-
     transport = analyzed.get("transport", {})
 
-    # Chỉ xử lý ARP Reply (op = "Reply")
-    # ARP Request là bình thường, Reply mới là lúc cập nhật ARP cache
     if analyzed.get("transport_proto") != "ARP":
         return
     if transport.get("op") != "Reply":
@@ -42,7 +34,6 @@ def _check_arp_spoofing(analyzed):
     if not src_ip or not src_mac:
         return
 
-    # Bỏ qua địa chỉ broadcast
     if src_ip == "0.0.0.0" or src_mac == "ff:ff:ff:ff:ff:ff":
         return
 
@@ -50,7 +41,6 @@ def _check_arp_spoofing(analyzed):
         known_mac = _arp_table[src_ip]
 
         if known_mac != src_mac:
-            # ── PHÁT HIỆN ARP SPOOFING ──────────────────────────
             message = (
                 f"ARP Spoofing detected! "
                 f"IP {src_ip} đổi MAC: "
@@ -58,7 +48,6 @@ def _check_arp_spoofing(analyzed):
             )
             print(f"[🚨 ALERT] {message}")
 
-            # Lưu alert vào DB
             db.save_alert(
                 alert_type="ARP_SPOOFING",
                 message=message,
@@ -66,7 +55,6 @@ def _check_arp_spoofing(analyzed):
                 session_id=_current_session_id
             )
 
-            # Emit lên frontend ngay lập tức
             socketio.emit("arp_alert", {
                 "type":      "ARP_SPOOFING",
                 "ip":        src_ip,
@@ -76,7 +64,6 @@ def _check_arp_spoofing(analyzed):
                 "time":      analyzed.get("time")
             })
     else:
-        # Lần đầu thấy IP này → ghi nhớ
         _arp_table[src_ip] = src_mac
 
 def _dns_worker():
@@ -115,17 +102,10 @@ _current_session_name = ""
 UPLOAD_FOLDER = "data/uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-# ─── Xử lý gói tin ────────────────────────────────────────────────────────
-
 def process_packet(raw_bytes):
-    """
-    Callback cho live capture.
-    Nhận raw bytes → phân tích → lọc loopback → lưu DB → emit WebSocket
-    """
     global _current_session_id
     analyzed  = analyze_packet(raw_bytes)
 
-    # ── Bỏ qua traffic nội bộ (Loopback) ──────────────────────────
     ip = analyzed.get("ip", {})
     src_ip = ip.get("src_ip", "")
     dst_ip = ip.get("dst_ip", "")
@@ -133,21 +113,18 @@ def process_packet(raw_bytes):
         return
     
     _check_arp_spoofing(analyzed)
-    # ──────────────────────────────────────────────────────────────
 
     packet_id = db.save_packet(analyzed, session_id=_current_session_id)
 
     ip = analyzed.get("ip", {})
     tr = analyzed.get("transport", {})
 
-    # Trích xuất DNS query name nếu có
     dns_query = ""
     app_layer = analyzed.get("app_layer", {})
     dns_info = app_layer.get("dns", {})
     if dns_info.get("type") == "query" and dns_info.get("queries"):
         dns_query = dns_info["queries"][0].get("name", "")
 
-    # Trích xuất Clear-text Credentials (HTTP)
     credentials = []
     http_info = app_layer.get("http", {})
     if http_info.get("credentials_found"):
@@ -169,15 +146,13 @@ def process_packet(raw_bytes):
         "credentials": credentials,
     })
 
-    # Xếp hàng tra cứu Reverse DNS
     for _ip in (ip.get("src_ip"), ip.get("dst_ip")):
         if _ip and _ip not in _dns_cache:
             _dns_cache[_ip] = "pending"
             _dns_queue.put(_ip)
 
-# ─── REST API ─────────────────────────────────────────────────────────────
-
 @app.route("/api/packets")
+
 def get_packets():
     session_id = request.args.get("session_id", type=int)
     limit      = request.args.get("limit", 100, type=int)
@@ -188,6 +163,7 @@ def get_packet_detail(packet_id):
     return jsonify(db.get_packet_detail(packet_id))
 
 @app.route("/api/stats/protocols")
+
 def get_protocol_stats():
     session_id = request.args.get("session_id", type=int)
     return jsonify(db.get_protocol_stats(session_id))
@@ -203,6 +179,7 @@ def get_traffic_time():
     return jsonify(db.get_traffic_over_time(session_id))
 
 @app.route("/api/alerts")
+
 def get_alerts():
     session_id = request.args.get("session_id", type=int)
     return jsonify(db.get_recent_alerts(session_id=session_id))
@@ -212,17 +189,13 @@ def get_sessions():
     return jsonify(db.get_sessions())
 
 @app.route("/api/sessions/<int:session_id>", methods=["DELETE"])
+
 def delete_session(session_id):
     db.delete_session(session_id)
     return jsonify({"ok": True})
 
 @app.route("/api/upload-pcap", methods=["POST"])
 def upload_pcap():
-    """
-    Nhận file .pcap từ frontend,
-    đọc bằng PCAP reader thuần Python,
-    lưu vào 1 session mới.
-    """
     if "file" not in request.files:
         return jsonify({"error": "Không có file"}), 400
 
@@ -231,15 +204,12 @@ def upload_pcap():
     if not file.filename.endswith(('.pcap', '.pcapng')):
         return jsonify({"error": "Chỉ hỗ trợ file .pcap hoặc .pcapng"}), 400
 
-    # Lưu file tạm
     filename  = secure_filename(file.filename)
     filepath  = os.path.join(UPLOAD_FOLDER, filename)
     file.save(filepath)
 
-    # Tạo session mới
     session_id = db.create_session(f"PCAP: {filename}")
 
-    # Đọc bằng PCAP reader thuần Python
     try:
         packets = PacketCapture.load_from_pcap(filepath)
     except Exception as e:
@@ -284,22 +254,16 @@ def upload_pcap():
 
 @app.route("/api/interfaces")
 def get_interfaces():
-    """Trả về danh sách network interfaces"""
     interfaces = PacketCapture.list_interfaces()
     return jsonify(interfaces)
 
 @app.route("/api/friendly-interfaces")
 def get_friendly_interfaces():
-    """Trả về danh sách network interfaces kèm thông tin chi tiết"""
     interfaces = PacketCapture.list_interfaces()
     return jsonify(interfaces)
 
 @app.route("/api/replay-pcap", methods=["POST"])
 def replay_pcap():
-    """
-    Replay file .pcap: đọc và emit từng gói tin qua WebSocket
-    với tốc độ delay có thể điều chỉnh.
-    """
     global _current_session_id, _is_capturing
 
     if "file" not in request.files:
@@ -309,13 +273,12 @@ def replay_pcap():
     speed = float(request.form.get("speed", 1.0))
 
     if not file.filename.endswith(('.pcap', '.pcapng')):
-        return jsonify({"error": "Chỉ hỗ trợ file .pcap hoặc .pcapng"}), 400
+        return jsonify({"chỉ file.pcap hoặc .pcapng"}), 400
 
     filename = secure_filename(file.filename)
     filepath = os.path.join(UPLOAD_FOLDER, filename)
     file.save(filepath)
 
-    # Tạo session mới cho replay
     session_id = db.create_session(f"Replay: {filename}")
     _current_session_id = session_id
 
@@ -334,7 +297,6 @@ def replay_pcap():
 
     total = len(packets)
 
-    # Replay từng gói trong background thread
     def do_replay():
         import time as _time
         speed_factor = float(speed) if speed > 0 else 1.0
@@ -351,7 +313,7 @@ def replay_pcap():
                 delta = ts_file - last_ts
                 if delta > 0:
                     delay = delta / speed_factor
-                    delay = min(delay, 5.0)  # Giới hạn delay tối đa là 5s
+                    delay = min(delay, 5.0) 
                     _time.sleep(delay)
                 else:
                     _time.sleep(0.001)
@@ -395,7 +357,6 @@ def replay_pcap():
                 "credentials": credentials,
             })
 
-            # Emit progress
             progress = int((i + 1) / total * 100)
             socketio.emit("replay_progress", {"progress": progress})
 
@@ -414,8 +375,6 @@ def replay_pcap():
         "total_packets": total,
         "status": "replaying"
     })
-
-# ─── WebSocket ────────────────────────────────────────────────────────────
 
 @socketio.on("connect")
 def handle_connect():
@@ -447,15 +406,13 @@ def handle_start(data):
     iface = data.get("interface") or None
 
     def run_sniff():
-        """Bắt gói tin bằng raw socket AF_PACKET"""
         cap = PacketCapture()
         cap.start_live_capture(
             interface=iface,
             callback=process_packet,
-            count=0  # liên tục cho đến khi dừng
+            count=0 
         )
 
-    # Override is_running khi stop
     def run_sniff_with_stop():
         import socket as raw_socket
 
@@ -480,9 +437,9 @@ def handle_start(data):
                         print(f"[!] Lỗi nhận gói: {e}")
                     break
         except PermissionError:
-            print("[!] Cần quyền root. Chạy: sudo python server.py")
+            print("Cần quyền root.")
         except Exception as e:
-            print(f"[!] Lỗi capture: {e}")
+            print(e)
         finally:
             try:
                 sock.close()
@@ -504,10 +461,8 @@ def handle_disconnect():
     global _is_capturing
     if _is_capturing:
         _is_capturing = False
-        print("[!] Client ngắt kết nối -> Tự động dừng Capture.")
+        print("Client disconnected, stop Capture.")
 
 if __name__ == "__main__":
-    print("[*] Server chạy tại http://localhost:5000")
-    print("[*] Backend: 100% Python thuần (Raw Socket + struct.unpack)")
-    print("[*] Cần quyền root để bắt gói tin: sudo python server.py")
+    print("Server chạy tại http://localhost:5000")
     socketio.run(app, host="0.0.0.0", port=5000, debug=True)

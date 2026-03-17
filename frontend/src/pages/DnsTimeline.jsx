@@ -11,25 +11,6 @@ import {
 } from 'recharts'
 import { Search, BarChart2, Globe, LineChart, Trophy, FileText, Clock, Activity, Tag, Copy } from 'lucide-react'
 
-/**
- * 🕵️ Trang DNS Resolution Timeline — Dòng thời gian Truy vấn Tên miền
- *
- * Mỗi khi máy tính muốn kết nối ra bất kỳ đâu trên Internet,
- * nó BUỘC phải gửi gói DNS Query (hỏi đường). Trang này bắt trọn
- * toàn bộ các lần "hỏi đường" đó và vẽ chúng lên trục thời gian.
- *
- * Ứng dụng: Phát hiện Telemetry / Malware / Phần mềm ngầm đang
- * liên lạc với máy chủ chủ quản sau lưng người dùng.
- */
-
-// Bảng màu cho từng nhóm domain
-const DOMAIN_COLORS = [
-    '#58a6ff', '#3fb950', '#d2a8ff', '#f0883e',
-    '#f85149', '#79c0ff', '#7ee787', '#e3b341',
-    '#ff7b72', '#a5d6ff', '#56d364', '#ffa657',
-]
-
-// Rút domain gốc (ví dụ: "telemetry.microsoft.com" → "microsoft.com")
 function _rootDomain(domain) {
     if (!domain) return ''
     const parts = domain.split('.')
@@ -37,15 +18,13 @@ function _rootDomain(domain) {
     return parts.slice(-2).join('.')
 }
 
-// Chuyển "14:32:01.123" → số giây tính từ 00:00
 function _timeToSeconds(timeStr) {
     if (!timeStr) return 0
-    const clean = timeStr.split('.')[0] // bỏ milliseconds
+    const clean = timeStr.split('.')[0] 
     const parts = clean.split(':').map(Number)
     return (parts[0] || 0) * 3600 + (parts[1] || 0) * 60 + (parts[2] || 0)
 }
 
-// Format ngược: số giây → "HH:MM:SS"
 function _secondsToTime(sec) {
     const h = String(Math.floor(sec / 3600)).padStart(2, '0')
     const m = String(Math.floor((sec % 3600) / 60)).padStart(2, '0')
@@ -58,7 +37,6 @@ function DnsTimeline({ socket }) {
     
     const [filterText, setFilterText] = useState('')
 
-    // Trích xuất & tính toán DNS timeline từ packets
     const dnsEntries = useMemo(() => {
         return packets
             .filter(pkt => pkt.dns_query)
@@ -69,10 +47,9 @@ function DnsTimeline({ socket }) {
                 rootDomain: _rootDomain(pkt.dns_query),
                 src_ip:     pkt.src_ip || '',
             }))
-            .reverse() // cũ → mới
+            .reverse() 
     }, [packets])
 
-    // Bản đồ màu cho từng root domain
     const colorMap = useMemo(() => {
         const map = {}
         let colorIdx = 0
@@ -85,7 +62,6 @@ function DnsTimeline({ socket }) {
         return map
     }, [dnsEntries])
 
-    // Thống kê tần suất từng domain gốc
     const domainStats = useMemo(() => {
         const counts = {}
         dnsEntries.forEach(e => {
@@ -96,7 +72,6 @@ function DnsTimeline({ socket }) {
             .sort((a, b) => b.count - a.count)
     }, [dnsEntries, colorMap])
 
-    // Lọc theo từ khóa
     const filteredEntries = useMemo(() => {
         if (!filterText) return dnsEntries
         const q = filterText.toLowerCase()
@@ -106,8 +81,6 @@ function DnsTimeline({ socket }) {
         )
     }, [dnsEntries, filterText])
 
-    // Dữ liệu cho Scatter Chart: mỗi entry → 1 dot
-    // ScatterChart cần trục Y — mình dùng index của rootDomain để phân tách
     const scatterData = useMemo(() => {
         const rootList = [...new Set(filteredEntries.map(e => e.rootDomain))]
         return filteredEntries.map(e => ({
@@ -124,21 +97,12 @@ function DnsTimeline({ socket }) {
         return [...new Set(filteredEntries.map(e => e.rootDomain))]
     }, [filteredEntries])
 
-    // Link to bottom (removed auto-scroll to prevent page jumping)
-    // useEffect(() => {
-    //     if (bottomRef.current) {
-    //         bottomRef.current.scrollIntoView({ behavior: 'smooth' })
-    //     }
-    // }, [dnsEntries.length])
-
-    // Copy domain
     const handleCopy = (text) => {
         if (navigator.clipboard) navigator.clipboard.writeText(text)
     }
 
     return (
         <div className="page-content" style={{ padding: '16px' }}>
-            {/* ── Header ─────────────────────────────────── */}
             <div style={{ marginBottom: '16px' }}>
                 <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#e6edf3', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <Search size={22} color="#58a6ff" /> Dòng Thời gian Truy vấn DNS
@@ -149,7 +113,6 @@ function DnsTimeline({ socket }) {
                 </p>
             </div>
 
-            {/* ── Thanh filter + stats ────────────────────── */}
             <div style={{
                 display: 'flex',
                 gap: '12px',
@@ -188,7 +151,6 @@ function DnsTimeline({ socket }) {
                 </span>
             </div>
 
-            {/* ── Scatter Plot ────────────────────────────── */}
             <div style={{
                 background: '#0d1117',
                 border: '1px solid #21262d',
@@ -267,7 +229,6 @@ function DnsTimeline({ socket }) {
                                     )
                                 }}
                             />
-                            {/* Đường kẻ ngang phân tách từng domain */}
                             {rootDomainList.map((_, i) => (
                                 <ReferenceLine
                                     key={i}
@@ -290,10 +251,8 @@ function DnsTimeline({ socket }) {
                 )}
             </div>
 
-            {/* ── Bảng xếp hạng Domain + Bảng chi tiết ──── */}
             <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
 
-                {/* Bảng xếp hạng tần suất domain */}
                 <div style={{
                     background: '#0d1117',
                     border: '1px solid #21262d',
@@ -370,7 +329,6 @@ function DnsTimeline({ socket }) {
                     )}
                 </div>
 
-                {/* Bảng chi tiết dòng thời gian */}
                 <div style={{
                     flex: 1,
                     minWidth: '400px',

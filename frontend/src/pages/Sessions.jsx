@@ -27,7 +27,6 @@ function Sessions() {
         fetchSessions();
     };
 
-    // Chuyển sang Dashboard với session_id được chọn
     const handleView = (id) => {
         navigate(`/?session_id=${id}`);
     };

@@ -29,7 +29,7 @@ const TopIPChart = memo(function TopIPChart({ data, dnsMap = {} }) {
         <ResponsiveContainer width="100%" height={200}>
             <BarChart
                 data={data}
-                layout="vertical" // bar nằm ngang — dễ đọc IP hơn
+                layout="vertical"
                 margin={{ left: 10, right: 20 }}
             >
                 <XAxis
@@ -45,7 +45,7 @@ const TopIPChart = memo(function TopIPChart({ data, dnsMap = {} }) {
                         const { x, y, payload } = props;
                         const ip = payload.value;
                         const domain = dnsMap[ip];
-                        
+
                         const handleCopy = (e) => {
                             e.stopPropagation();
                             if (domain && navigator.clipboard) {
@@ -66,7 +66,7 @@ const TopIPChart = memo(function TopIPChart({ data, dnsMap = {} }) {
                                 </text>
                                 {domain && (
                                     <svg x="-14" y="-6" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#8b949e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                        <rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
+                                        <rect width="14" height="14" x="8" y="8" rx="2" ry="2" /><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
                                     </svg>
                                 )}
                             </g>
@@ -84,7 +84,6 @@ const TopIPChart = memo(function TopIPChart({ data, dnsMap = {} }) {
                 />
                 <Bar dataKey="count" radius={[0, 4, 4, 0]} isAnimationActive={false}>
                     {data.map((_, index) => (
-                        // Gradient màu từ đậm → nhạt
                         <Cell
                             key={index}
                             fill={`rgba(88, 166, 255, ${1 - index * 0.08})`}

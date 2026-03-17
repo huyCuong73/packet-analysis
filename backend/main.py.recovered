@@ -22,17 +22,12 @@ class Colors:
     RESET   = "\033[0m"
 
 def banner():
-    print(f"""{Colors.CYAN}{Colors.BOLD}
-    ╔══════════════════════════════════════╗
-    ║   NSM — Network Security Monitor    ║
-    ║   100% Pure Python (Raw Socket)     ║
-    ╚══════════════════════════════════════╝
-    {Colors.RESET}""")
+    print(f"{Colors.CYAN}{Colors.BOLD}NSM - Network Security Monitor{Colors.RESET}")
 
 def print_header(text):
-    print(f"\n{Colors.BOLD}{Colors.BLUE}{'═'*60}")
+    print(f"\n{Colors.BOLD}{Colors.BLUE}{'='*60}")
     print(f"  {text}")
-    print(f"{'═'*60}{Colors.RESET}\n")
+    print(f"{'='*60}{Colors.RESET}\n")
 
 def print_success(text):
     print(f"  {Colors.GREEN}✔ {text}{Colors.RESET}")
@@ -316,7 +311,7 @@ def cmd_help(args=None):
     banner()
     print(f"""{Colors.BOLD}HƯỚNG DẪN SỬ DỤNG{Colors.RESET}
 
-  NSM sử dụng Raw Socket (AF_PACKET) để bắt gói tin
+  NSM từ Raw Socket (AF_PACKET) để bắt gói tin
   và struct.unpack để phân tích header — 100% Python thuần.
 
 {Colors.BOLD}CÁC LỆNH:{Colors.RESET}
@@ -386,61 +381,6 @@ def main():
 
     banner()
     args.func(args)
-
-if __name__ == "__main__":
-    main()
-��════════════════════════════════
-
-def build_parser():
-    parser = argparse.ArgumentParser(
-        prog="nsm",
-        description="NSM — Network Security Monitor (100% Pure Python)",
-    )
-
-    subparsers = parser.add_subparsers(dest="command")
-
-    sub_iface = subparsers.add_parser("interfaces", aliases=["ifaces", "if"])
-    sub_iface.set_defaults(func=cmd_interfaces)
-
-    sub_cap = subparsers.add_parser("capture", aliases=["cap", "sniff"])
-    sub_cap.add_argument("-i", "--interface", default=None)
-    sub_cap.add_argument("-c", "--count", type=int, default=0)
-    sub_cap.add_argument("-o", "--output", default=None)
-    sub_cap.add_argument("-s", "--save", action="store_true")
-    sub_cap.add_argument("-d", "--detail", action="store_true")
-    sub_cap.add_argument("-x", "--hex", action="store_true")
-    sub_cap.add_argument("-j", "--json", action="store_true")
-    sub_cap.set_defaults(func=cmd_capture)
-
-    sub_read = subparsers.add_parser("read", aliases=["pcap", "load"])
-    sub_read.add_argument("file")
-    sub_read.add_argument("-d", "--detail", action="store_true")
-    sub_read.add_argument("-x", "--hex", action="store_true")
-    sub_read.add_argument("-j", "--json", action="store_true")
-    sub_read.set_defaults(func=cmd_read)
-
-    sub_stats = subparsers.add_parser("stats", aliases=["stat", "summary"])
-    sub_stats.add_argument("file")
-    sub_stats.set_defaults(func=cmd_stats)
-
-    sub_help = subparsers.add_parser("help")
-    sub_help.set_defaults(func=cmd_help)
-
-    return parser
-
-
-def main():
-    parser = build_parser()
-    args = parser.parse_args()
-
-    if not args.command:
-        banner()
-        parser.print_help()
-        return
-
-    banner()
-    args.func(args)
-
 
 if __name__ == "__main__":
     main()

@@ -38,7 +38,6 @@ function Dashboard({ socket }) {
 		? parseInt(searchParams.get('session_id'))
 		: null;
 
-	// Packets lịch sử khi xem lại phiên cũ
 	const [historicalPackets, setHistoricalPackets] = useState([]);
 
 	useEffect(() => {
@@ -46,7 +45,6 @@ function Dashboard({ socket }) {
 			setHistoricalPackets([]);
 			return;
 		}
-		// Gọi API lấy packets của phiên cũ
 		axios
 			.get(
 				`http://localhost:5000/api/packets?session_id=${viewSessionId}&limit=1000`
@@ -61,7 +59,6 @@ function Dashboard({ socket }) {
 		setSelectedId(null);
 	};
 
-	// State cho pcap upload
 	const [pcapPackets, setPcapPackets] = useState([]);
 	const [pcapSessionName, setPcapSessionName] = useState('');
 	const [isPcapMode, setIsPcapMode] = useState(false);
@@ -81,14 +78,12 @@ function Dashboard({ socket }) {
 		setIsPcapMode(false);
 	};
 
-	// Quyết định dùng packets nào để tính stats
 	const activePackets = isPcapMode
 		? pcapPackets
 		: viewSessionId
 			? historicalPackets
 			: packets;
 
-	// ── Bộ lọc phía frontend ────────────────────────────────────────
 	const [filters, setFilters] = useState({
 		search: '',
 		protocol: '',
@@ -100,10 +95,8 @@ function Dashboard({ socket }) {
 		if (!search && !protocol && !port) return activePackets;
 
 		return activePackets.filter((pkt) => {
-			// Lọc theo protocol
 			if (protocol && pkt.protocol !== protocol) return false;
 
-			// Lọc theo IP (src hoặc dst, match partial)
 			if (search) {
 				const q = search.toLowerCase();
 				const srcMatch = (pkt.src_ip || '').toLowerCase().includes(q);
@@ -111,7 +104,6 @@ function Dashboard({ socket }) {
 				if (!srcMatch && !dstMatch) return false;
 			}
 
-			// Lọc theo port (src hoặc dst)
 			if (port) {
 				const p = parseInt(port);
 				if (!isNaN(p) && pkt.src_port !== p && pkt.dst_port !== p)
@@ -136,14 +128,12 @@ function Dashboard({ socket }) {
 				formData,
 				{ headers: { 'Content-Type': 'multipart/form-data' } }
 			)
-			setIsReplaying(true) // Bắt đầu trạng thái replay
+			setIsReplaying(true) 
 		} catch (err) {
 			console.error('Replay error:', err)
 		}
 	}
 
-
-	// Charts dùng dữ liệu đã lọc
 	const { protocolStats, topIPs, timeStats, topTalkers, trafficLocation, portActivity, credentialsList } = useFrontendStats(filteredPackets);
 
 	return (
@@ -159,8 +149,8 @@ function Dashboard({ socket }) {
 				onUploadPcap={() => setShowUploader((prev) => !prev)}
 				isPcapMode={isPcapMode}
 				onExitPcap={handleExitPcap}
-				onReplay={handleReplay}           // ← thêm
-				isReplaying={isReplaying}         // ← thêm
+				onReplay={handleReplay}           
+				isReplaying={isReplaying}         
 				replayProgress={replayProgress}
 			/>
 
@@ -185,7 +175,6 @@ function Dashboard({ socket }) {
 						{pcapPackets.length} gói tin
 					</div>
 				)}
-				{/* Banner khi đang xem phiên cũ */}
 				{viewSessionId && (
 					<div
 						style={{

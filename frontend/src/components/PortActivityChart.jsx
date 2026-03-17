@@ -1,20 +1,18 @@
 import { memo, useMemo } from 'react'
 
-// Tạo màu nền dựa trên mức độ hoạt động (0 → đen, cao → đỏ cam)
 function _heatColor(count, maxCount) {
     if (!count || count === 0) return 'transparent'
     const ratio = Math.min(count / Math.max(maxCount, 1), 1)
 
-    if (ratio < 0.25) return 'rgba(88, 166, 255, 0.2)'   // xanh nhạt
-    if (ratio < 0.50) return 'rgba(88, 166, 255, 0.45)'   // xanh vừa
-    if (ratio < 0.75) return 'rgba(227, 179, 65, 0.55)'   // vàng cam
-    return 'rgba(248, 81, 73, 0.7)'                        // đỏ — nóng nhất
+    if (ratio < 0.25) return 'rgba(88, 166, 255, 0.2)'
+    if (ratio < 0.50) return 'rgba(88, 166, 255, 0.45)'
+    if (ratio < 0.75) return 'rgba(227, 179, 65, 0.55)'
+    return 'rgba(248, 81, 73, 0.7)'
 }
 
 const PortActivityChart = memo(function PortActivityChart({ data }) {
     const { ports = [], timeSlots = [], matrix = {} } = data || {}
 
-    // Tìm giá trị lớn nhất trong toàn bộ ma trận để scale màu
     const maxCount = useMemo(() => {
         let max = 0
         for (const time of timeSlots) {
@@ -39,7 +37,6 @@ const PortActivityChart = memo(function PortActivityChart({ data }) {
         )
     }
 
-    // Giới hạn hiển thị 15 cột thời gian gần nhất
     const visibleSlots = timeSlots.slice(-15)
 
     return (
@@ -50,7 +47,6 @@ const PortActivityChart = memo(function PortActivityChart({ data }) {
                 fontSize: '10px',
                 fontFamily: 'monospace',
             }}>
-                {/* Header: thời gian */}
                 <thead>
                     <tr>
                         <th style={{
@@ -78,10 +74,8 @@ const PortActivityChart = memo(function PortActivityChart({ data }) {
                     </tr>
                 </thead>
 
-                {/* Body: mỗi hàng = 1 port */}
                 <tbody>
                     {ports.map(p => {
-                        // Chỉ hiện port nếu có ít nhất 1 ô có dữ liệu
                         const hasData = visibleSlots.some(
                             t => (matrix[t]?.[p.port] || 0) > 0
                         )
@@ -146,7 +140,6 @@ const PortActivityChart = memo(function PortActivityChart({ data }) {
                 </tbody>
             </table>
 
-            {/* Chú thích màu */}
             <div style={{
                 display: 'flex',
                 alignItems: 'center',

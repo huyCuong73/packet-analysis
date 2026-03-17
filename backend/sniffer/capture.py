@@ -1,11 +1,3 @@
-"""
-╔══════════════════════════════════════════════════════════════════╗
-║       PACKET CAPTURE — 100% Python thuần                        ║
-║  Raw socket (AF_PACKET) + PCAP file reader/writer               ║
-║  KHÔNG dùng Scapy                                               ║
-╚══════════════════════════════════════════════════════════════════╝
-"""
-
 import socket
 import struct
 import os
@@ -17,85 +9,66 @@ from typing import Callable, List, Optional
 
 
 def _normalize_frame(buf, datalink):
-    """
-    Chuẩn hóa các datalink type khác nhau
-    về dạng Ethernet frame mà raw_parser hiểu được.
 
-    datalink types phổ biến:
-      1   = Ethernet (giữ nguyên)
-      113 = Linux Cooked Capture (SLL) — bỏ 16B header, thêm fake Ethernet
-      0   = BSD Loopback — bỏ 4B header
-      228 = Raw IPv4 — thêm fake Ethernet header
-    """
     import struct
 
-    # Ethernet — giữ nguyên
+
     if datalink == 1:
         return buf
 
-    # Linux Cooked (SLL) — 16 byte header
-    # Structure: packet_type(2) + arphrd(2) + ll_addr_len(2)
-    #          + ll_addr(8) + proto(2)
     elif datalink == 113:
         if len(buf) < 16:
             return None
         proto = struct.unpack('!H', buf[14:16])[0]
         payload = buf[16:]
 
-        # Tạo fake Ethernet header
+      
         fake_eth = (
-            b'\xff\xff\xff\xff\xff\xff' +  # dst MAC
-            b'\x00\x00\x00\x00\x00\x00' +  # src MAC
-            struct.pack('!H', proto)         # EtherType
+            b'\xff\xff\xff\xff\xff\xff' + 
+            b'\x00\x00\x00\x00\x00\x00' +  
+            struct.pack('!H', proto)      
         )
         return fake_eth + payload
 
-    # BSD Loopback — 4 byte header chứa AF family
+  
     elif datalink == 0:
         if len(buf) < 4:
             return None
-        af = struct.unpack('<I', buf[:4])[0]  # little-endian
+        af = struct.unpack('<I', buf[:4])[0]  
         payload = buf[4:]
 
-        # AF_INET = 2
+
         if af == 2:
             fake_eth = (
                 b'\xff\xff\xff\xff\xff\xff' +
                 b'\x00\x00\x00\x00\x00\x00' +
-                b'\x08\x00'  # IPv4
+                b'\x08\x00'  
             )
             return fake_eth + payload
 
-    # Raw IPv4 — không có header, thêm fake Ethernet
+ 
     elif datalink == 228:
         fake_eth = (
             b'\xff\xff\xff\xff\xff\xff' +
             b'\x00\x00\x00\x00\x00\x00' +
-            b'\x08\x00'  # IPv4
+            b'\x08\x00'  
         )
         return fake_eth + buf
 
-    # Datalink không hỗ trợ → bỏ qua
+
     return None
 
 class PacketCapture:
-    """
-    Class quản lý việc bắt gói tin bằng raw socket.
-
-    Trên Linux (WSL), sử dụng AF_PACKET + SOCK_RAW để nhận
-    toàn bộ raw Ethernet frame.
-    """
 
     def __init__(self):
         self.captured_packets: List[bytes] = []
         self.is_running = False
         self._sock = None
 
-    # ─── 1. Liệt kê interfaces ────────────────────────────────────────
+
 
     @staticmethod
     def list_interfaces() -> list:
-        """Liệt kê network interfaces từ /sys/class/net/"""
         try:
             interfaces = []
             net_dir = "/sys/class/net/"
@@ -109,7 +82,7 @@ class PacketCapture:
                 })
             return interfaces
         except Exception as e:
-            print(f"[!] Lỗi liệt kê interfaces: {e}")
+            print(f"[!] error listing interfaces: {e}")
             return []
 
     
@@ -117,12 +90,11 @@ class PacketCapture:
 
     @staticmethod
     def _get_iface_ip(iface_name):
-        """Lấy IP address của interface bằng ioctl"""
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             ip = socket.inet_ntoa(fcntl.ioctl(
                 s.fileno(),
-                0x8915,  # SIOCGIFADDR
+                0x8915,  
                 struct.pack('256s', iface_name.encode('utf-8')[:15])
             )[20:24])
             s.close()
@@ -132,14 +104,17 @@ class PacketCapture:
 
     @staticmethod
     def _get_iface_mac(iface_name):
-        """Lấy MAC address từ /sys/class/net/"""
         try:
             with open(f"/sys/class/net/{iface_name}/address") as f:
                 return f.read().strip()
         except Exception:
             return "N/A"
 
-    # ─── 2. Bắt gói tin trực tiếp (Raw Socket) ────────────────────────
+
+
+
+
+
 
     def start_live_capture(
         self,
@@ -148,19 +123,11 @@ class PacketCapture:
         count: int = 0,
         callback: Callable = None
     ):
-        """
-        Bắt gói tin trực tiếp bằng raw socket AF_PACKET.
 
-        AF_PACKET + SOCK_RAW nhận toàn bộ Ethernet frame,
-        bao gồm cả MAC header — đầy đủ nhất có thể.
-
-        Cần chạy với quyền root (sudo).
-        """
         self.is_running = True
         self.captured_packets = []
 
         try:
-            # ETH_P_ALL = 0x0003 → nhận mọi loại gói tin
             self._sock = socket.socket(
                 socket.AF_PACKET,
                 socket.SOCK_RAW,
@@ -170,11 +137,10 @@ class PacketCapture:
             if interface:
                 self._sock.bind((interface, 0))
 
-            self._sock.settimeout(1.0)  # timeout để kiểm tra is_running
+            self._sock.settimeout(1.0)  
 
             print(f"[*] Bắt đầu capture (Raw Socket)")
             print(f"    Interface : {interface or 'tất cả'}")
-            print(f"    Nhấn Ctrl+C để dừng\n")
 
             packet_count = 0
 
@@ -194,13 +160,13 @@ class PacketCapture:
                 except socket.timeout:
                     continue
                 except KeyboardInterrupt:
-                    print("\n[!] Người dùng dừng capture.")
+                    print("\nUser stop capture.")
                     break
 
         except PermissionError:
-            print("[!] Cần quyền root. Chạy: sudo python server.py")
+            print("root requested")
         except Exception as e:
-            print(f"[!] Lỗi capture: {e}")
+            print(f" error capturing: {e}")
         finally:
             self.is_running = False
             if self._sock:
@@ -208,26 +174,25 @@ class PacketCapture:
                 self._sock = None
 
     def stop(self):
-        """Dừng capture"""
         self.is_running = False
 
-    # ─── 3. Đọc file PCAP ─────────────────────────────────────────────
+
+
+
+
+
+
+
     @staticmethod
     def load_from_pcap(filepath, callback=None) -> list:
-        """
-        Đọc file .pcap hoặc .pcapng
-        - .pcap  → tự parse bằng struct (Python thuần)
-        - .pcapng → dùng dpkt
-        """
         if not os.path.exists(filepath):
             print(f"[!] Không tìm thấy file: {filepath}")
             return []
 
-        # Phân biệt pcap vs pcapng bằng magic number
+
         with open(filepath, 'rb') as f:
             magic = f.read(4)
 
-        # pcapng magic: 0x0A0D0D0A
         if magic == b'\x0a\x0d\x0d\x0a':
             return PacketCapture._load_pcapng(filepath, callback)
         else:
@@ -238,7 +203,7 @@ class PacketCapture:
         try:
             import dpkt
         except ImportError:
-            print("[!] Cần cài dpkt: pip install dpkt")
+            print("require dpkt")
             return []
 
         packets = []
@@ -248,67 +213,49 @@ class PacketCapture:
                 datalink = reader.datalink()
                 for ts, buf in reader:
 
-                    # Chuẩn hóa về Ethernet frame
-                    # để raw_parser đọc được bình thường
                     normalized = _normalize_frame(buf, datalink)
                     if normalized:
                         packets.append((ts, normalized))
                         if callback:
                             callback((ts, normalized))
 
-            print(f"[+] Đọc được {len(packets)} gói từ {filepath} (pcapng)")
         except Exception as e:
-            print(f"[!] Lỗi đọc pcapng: {e}")
+            print(e)
 
         return packets
 
     
     @staticmethod
     def _load_pcap(filepath, callback=None) -> list:
-        """
-        Đọc file .pcap bằng Python thuần.
 
-        PCAP file format:
-        ┌────────────────────────┐
-        │ Global Header (24B)    │
-        ├────────────────────────┤
-        │ Packet Header (16B)    │
-        │ Packet Data            │
-        ├────────────────────────┤
-        │ Packet Header (16B)    │
-        │ Packet Data            │
-        ├────────────────────────┤
-        │ ...                    │
-        └────────────────────────┘
-        """
         if not os.path.exists(filepath):
-            print(f"[!] Không tìm thấy file: {filepath}")
+            print(f"Không tìm thấy file")
             return []
 
         packets = []
 
         with open(filepath, 'rb') as f:
-            # ── Global Header (24 bytes) ──────────────────────────
+       
             global_header = f.read(24)
             if len(global_header) < 24:
-                print("[!] File PCAP không hợp lệ (quá ngắn)")
+                print("File quá ngắn")
                 return []
 
             magic = struct.unpack('<I', global_header[:4])[0]
 
-            # Xác định byte order từ magic number
+       
             if magic == 0xa1b2c3d4:
-                endian = '<'  # Little-endian
+                endian = '<' 
             elif magic == 0xd4c3b2a1:
-                endian = '>'  # Big-endian
+                endian = '>' 
             else:
-                print(f"[!] File không phải PCAP (magic: {hex(magic)})")
+                print(f"không phải PCAP")
                 return []
 
-            # ── Đọc từng packet ──────────────────────────────────
+    
             idx = 0
             while True:
-                # Packet header (16 bytes)
+            
                 pkt_header = f.read(16)
                 if len(pkt_header) < 16:
                     break
@@ -316,7 +263,7 @@ class PacketCapture:
                 ts_sec, ts_usec, incl_len, orig_len = \
                     struct.unpack(f'{endian}IIII', pkt_header)
 
-                # Packet data
+          
                 pkt_data = f.read(incl_len)
                 if len(pkt_data) < incl_len:
                     break
@@ -331,24 +278,12 @@ class PacketCapture:
         print(f"[+] Đọc được {len(packets)} gói tin từ {filepath}")
         return packets
 
-    # ─── 4. Ghi file PCAP ──────────────────────────────────────────────
 
     @staticmethod
     def save_to_pcap(packets, filepath=None) -> str:
-        """
-        Ghi danh sách raw packets ra file .pcap
 
-        PCAP Global Header:
-          magic_number  = 0xa1b2c3d4
-          version_major = 2
-          version_minor = 4
-          thiszone      = 0
-          sigfigs       = 0
-          snaplen       = 65535
-          network       = 1 (LINKTYPE_ETHERNET)
-        """
         if not packets:
-            print("[!] Không có gói tin nào để lưu.")
+            print("Không ")
             return ""
 
         os.makedirs("captures", exist_ok=True)
@@ -358,30 +293,26 @@ class PacketCapture:
             filepath = f"captures/capture_{timestamp}.pcap"
 
         with open(filepath, 'wb') as f:
-            # Global Header
             f.write(struct.pack('<IHHIIII',
-                0xa1b2c3d4,  # magic
-                2,            # version major
-                4,            # version minor
-                0,            # thiszone
-                0,            # sigfigs
-                65535,        # snaplen
-                1             # LINKTYPE_ETHERNET
+                0xa1b2c3d4,  
+                2,            
+                4,            
+                0,            
+                0,            
+                65535,        
+                1             
             ))
-
-            # Packet records
+      
             now = int(time.time())
             for pkt in packets:
                 pkt_len = len(pkt)
-                # Packet header: ts_sec, ts_usec, incl_len, orig_len
                 f.write(struct.pack('<IIII', now, 0, pkt_len, pkt_len))
                 f.write(pkt)
 
-        print(f"[+] Đã lưu {len(packets)} gói tin → {filepath}")
+        print(f"Đã lưu")
         return filepath
 
     
-    # ─── 5. Thống kê nhanh ─────────────────────────────────────────────
 
     def get_summary(self) -> dict:
         return {

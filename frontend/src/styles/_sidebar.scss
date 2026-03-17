@@ -4,11 +4,10 @@
     display: flex;
     flex: 1;
     min-height: 0;
-    position: relative; // Để sidebar absolute hoạt động chính xác
-    padding-left: 64px; // Chừa chỗ cho sidebar khi thu gọn
+    position: relative;
+    padding-left: 64px;
 }
 
-// ── Sidebar trái ───────────────────────────────────────────────────
 .sidebar {
     width: 64px;
     background: $bg-secondary;
@@ -17,17 +16,16 @@
     flex-direction: column;
     padding: 12px 0;
     gap: 4px;
-    position: absolute; // Float lên trên
+    position: absolute;
     left: 0;
     top: 0;
     bottom: 0;
-    height: auto; // Chiếm hết chiều cao còn lại
+    height: auto;
     overflow-x: hidden;
     overflow-y: auto;
     transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     z-index: 1000;
 
-    // Khi hover vào sidebar
     &:hover {
         width: 240px;
         box-shadow: 10px 0 30px rgba(0, 0, 0, 0.4);
@@ -39,7 +37,7 @@
         padding: 8px 20px;
         margin-bottom: 8px;
         gap: 12px;
-        min-width: 240px; // ngăn logo nén lại
+        min-width: 240px;
 
         &-text {
             font-size: 16px;
@@ -68,7 +66,6 @@
     }
 }
 
-// ── Từng item trong sidebar ────────────────────────────────────────
 .nav-item {
     margin: 0 12px;
     height: 44px;
@@ -87,7 +84,6 @@
         color: $text-primary;
     }
 
-    // Trạng thái active (đang ở trang này)
     &--active {
         background: rgba(88, 166, 255, 0.1);
         color: $accent-blue;
@@ -118,7 +114,6 @@
         opacity: 1;
     }
 
-    // Badge số đỏ (thông báo alert chưa đọc)
     &__badge {
         position: absolute;
         top: 8px;
@@ -138,12 +133,11 @@
     }
 }
 
-// ── Phần nội dung bên phải sidebar ────────────────────────────────
 .page-content {
     flex: 1;
     min-height: 0;
     display: flex;
     flex-direction: column;
-    overflow-y: auto; // Cho phép scroll dọc cho các trang thông thường
+    overflow-y: auto;
     overflow-x: hidden;
 }

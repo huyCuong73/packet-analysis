@@ -8,7 +8,6 @@ import {
     ResponsiveContainer,
 } from 'recharts';
 
-// Màu tương ứng với từng protocol
 const COLORS = {
     TCP: '#58a6ff',
     UDP: '#3fb950',
@@ -45,8 +44,7 @@ const ProtocolChart = memo(function ProtocolChart({ data }) {
                     cy="50%"
                     outerRadius={70}
                     labelLine={false}
-                    isAnimationActive={false} // Tắt hiệu ứng chuyển cảnh SVG khi update liên tục
-                    // Hiển thị % trên từng miếng
+                    isAnimationActive={false}
                     label={({ protocol, percent }) =>
                         percent > 0.05
                             ? `${protocol} ${(percent * 100).toFixed(0)}%`
