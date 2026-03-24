@@ -51,7 +51,7 @@ function Controls({
 			<span className="controls__label">Filter:</span>
 			<input
 				className="controls__filter-input"
-				placeholder='vd: tcp port 80'
+				placeholder='e.g. tcp port 80'
 				value={filter}
 				onChange={e => setFilter(e.target.value)}
 				onKeyDown={e => {
@@ -66,7 +66,7 @@ function Controls({
 				onClick={handleStart}
 				disabled={!isConnected || isBusy}
 				style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-				<Play size={14} /> Bắt đầu
+				<Play size={14} /> Start
 			</button>
 
 
@@ -74,7 +74,7 @@ function Controls({
 				onClick={onStop}
 				disabled={!isCapturing && !isReplaying}
 				style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-				<Square size={14} /> Dừng
+				<Square size={14} /> Stop
 			</button>
 
 
@@ -83,7 +83,7 @@ function Controls({
 				value={speed}
 				onChange={e => setSpeed(e.target.value)}
 				disabled={isBusy}
-				title="Tốc độ replay"
+				title="Replay speed"
 			>
 				<option value="0.5">0.5x</option>
 				<option value="1">1x</option>
@@ -98,7 +98,7 @@ function Controls({
 				className="btn btn--clear"
 				onClick={() => replayInputRef.current.click()}
 				disabled={isBusy}
-				title="Chọn file .pcap để replay"
+				title="Select .pcap file to replay"
 				style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
 			>
 				<PlaySquare size={14} /> Replay .pcap
@@ -149,14 +149,14 @@ function Controls({
 				onClick={onUploadPcap}
 				disabled={isBusy}
 				style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-				<FolderOpen size={14} /> Mở .pcap
+				<FolderOpen size={14} /> Open .pcap
 			</button>
 
 			{isPcapMode && (
 				<button className="btn btn--stop"
 					onClick={onExitPcap}
 					style={{ fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-					<X size={14} /> Đóng file
+					<X size={14} /> Close file
 				</button>
 			)}
 
@@ -165,14 +165,14 @@ function Controls({
 				onClick={onClear}
 				disabled={isBusy}
 				style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-				<Trash2 size={14} /> Xóa
+				<Trash2 size={14} /> Clear
 			</button>
 
 
 			<span className="controls__count" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
 				{isReplaying && (
 					<span style={{ color: '#d2a8ff', marginRight: '8px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-						<PlaySquare size={14} /> Đang replay...
+						<PlaySquare size={14} /> Replaying...
 					</span>
 				)}
 				{isCapturing && currentSessionName && (
@@ -180,7 +180,7 @@ function Controls({
 						<FileText size={14} /> {currentSessionName}
 					</span>
 				)}
-				{isBusy ? <><Zap size={14} /> {packetCount} gói tin</> : `${packetCount} gói tin`}
+				{isBusy ? <><Zap size={14} /> {packetCount} packets</> : `${packetCount} packets`}
 			</span>
 
 		</div>

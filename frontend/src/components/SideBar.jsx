@@ -35,7 +35,7 @@ function Sidebar({ alertCount = 0 }) {
                         </span>
                     )}
                 </div>
-                <span className="nav-item__label">Cảnh báo</span>
+                <span className="nav-item__label">Alerts</span>
             </NavLink>
 
             <NavLink
@@ -45,7 +45,7 @@ function Sidebar({ alertCount = 0 }) {
                 }
             >
                 <div className="nav-item__icon"><FileText size={20} /></div>
-                <span className="nav-item__label">Lịch sử phiên</span>
+                <span className="nav-item__label">Sessions</span>
             </NavLink>
 
             <NavLink
@@ -65,7 +65,7 @@ function Sidebar({ alertCount = 0 }) {
                 }
             >
                 <div className="nav-item__icon"><Key size={20} /></div>
-                <span className="nav-item__label">Rò rỉ Creds</span>
+                <span className="nav-item__label">Credential Leaks</span>
             </NavLink>
         </aside>
     );

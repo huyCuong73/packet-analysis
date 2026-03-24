@@ -32,7 +32,7 @@ const PortActivityChart = memo(function PortActivityChart({ data }) {
                 paddingTop: '40px',
                 fontSize: '12px',
             }}>
-                Chưa có dữ liệu
+                No data available
             </div>
         )
     }
@@ -107,7 +107,7 @@ const PortActivityChart = memo(function PortActivityChart({ data }) {
                                         <td
                                             key={t}
                                             title={count > 0
-                                                ? `${p.label} (${p.port}) lúc ${t}: ${count} gói`
+                                                ? `${p.label} (${p.port}) at ${t}: ${count} packets`
                                                 : ''}
                                             style={{
                                                 padding: '2px',
@@ -149,7 +149,7 @@ const PortActivityChart = memo(function PortActivityChart({ data }) {
                 fontSize: '9px',
                 color: '#8b949e',
             }}>
-                <span>Ít</span>
+                <span>Low</span>
                 {['rgba(88,166,255,0.2)', 'rgba(88,166,255,0.45)',
                   'rgba(227,179,65,0.55)', 'rgba(248,81,73,0.7)'].map((c, i) => (
                     <div key={i} style={{
@@ -159,7 +159,7 @@ const PortActivityChart = memo(function PortActivityChart({ data }) {
                         background: c,
                     }} />
                 ))}
-                <span>Nhiều</span>
+                <span>High</span>
             </div>
         </div>
     )

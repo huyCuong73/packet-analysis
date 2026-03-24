@@ -16,7 +16,7 @@ const TrafficLocationChart = memo(function TrafficLocationChart({ data = [] }) {
                 paddingTop: '40px',
                 fontSize: '12px',
             }}>
-                Chưa có dữ liệu
+                No data available
             </div>
         )
     }
@@ -44,7 +44,7 @@ const TrafficLocationChart = memo(function TrafficLocationChart({ data = [] }) {
                     </Pie>
                     <Tooltip
                         formatter={(value, name) => [
-                            `${value} gói (${(value / total * 100).toFixed(1)}%)`,
+                            `${value} packets (${(value / total * 100).toFixed(1)}%)`,
                             name
                         ]}
                         contentStyle={{

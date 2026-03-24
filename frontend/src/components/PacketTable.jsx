@@ -99,7 +99,7 @@ function PacketTable({ packets, selectedId, onSelectPacket, dnsMap = {} }) {
                                     color: '#8b949e',
                                 }}
                             >
-                                Nhấn "Bắt đầu" để bắt gói tin...
+                                Click "Start" to capture packets...
                             </td>
                         </tr>
                     )}

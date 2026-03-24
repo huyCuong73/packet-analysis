@@ -12,7 +12,7 @@ const CredentialsTable = memo(function CredentialsTable({ data = [], onSelectPac
             }}>
                 <span style={{ fontSize: '20px' }}><CheckCircle size={24} color="#3fb950" /></span>
                 <br />
-                Chưa phát hiện rò rỉ thông tin đăng nhập nào
+                No credential leaks detected
             </div>
         )
     }
@@ -32,10 +32,10 @@ const CredentialsTable = memo(function CredentialsTable({ data = [], onSelectPac
                         background: '#0d1117',
                         zIndex: 1,
                     }}>
-                        <th style={thStyle}><div style={{display:'flex', alignItems:'center', gap:'4px'}}><Clock size={12}/> Thời gian</div></th>
-                        <th style={thStyle}>Thủ phạm (Nguồn)</th>
-                        <th style={thStyle}>Nạn nhân (Đích)</th>
-                        <th style={thStyle}>Thông tin bị lộ</th>
+                        <th style={thStyle}><div style={{display:'flex', alignItems:'center', gap:'4px'}}><Clock size={12}/> Time</div></th>
+                        <th style={thStyle}>Attacker (Source)</th>
+                        <th style={thStyle}>Victim (Destination)</th>
+                        <th style={thStyle}>Leaked Info</th>
                         <th style={thStyle}></th>
                     </tr>
                 </thead>
@@ -81,7 +81,7 @@ const CredentialsTable = memo(function CredentialsTable({ data = [], onSelectPac
                                     style={{ padding: '2px 6px', fontSize: '10px' }}
                                     onClick={() => onSelectPacket(entry.id)}
                                 >
-                                    Xem gói tin
+                                    View packet
                                 </button>
                             </td>
                         </tr>

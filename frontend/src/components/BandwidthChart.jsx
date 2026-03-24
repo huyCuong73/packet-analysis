@@ -54,7 +54,7 @@ function BandwidthChart({ data = [], dnsMap = {} }) {
                 gap: '8px'
             }}>
                 <BarChart2 size={24} color="#8b949e" />
-                <span>Chưa có dữ liệu</span>
+                <span>No data available</span>
             </div>
         )
     }

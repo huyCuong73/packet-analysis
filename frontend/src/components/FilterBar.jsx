@@ -36,7 +36,7 @@ function FilterBar({ totalCount, filteredCount, onFilterChange }) {
             <input
                 className="filter-bar__input filter-bar__input--search"
                 type="text"
-                placeholder="Lọc theo IP..."
+                placeholder="Filter by IP..."
                 value={search}
                 onChange={(e) => handleChange('search', e.target.value)}
             />
@@ -46,7 +46,7 @@ function FilterBar({ totalCount, filteredCount, onFilterChange }) {
                 value={protocol}
                 onChange={(e) => handleChange('protocol', e.target.value)}
             >
-                <option value="">Tất cả Protocol</option>
+                <option value="">All Protocols</option>
                 <option value="TCP">TCP</option>
                 <option value="UDP">UDP</option>
                 <option value="DNS">DNS</option>
@@ -71,8 +71,8 @@ function FilterBar({ totalCount, filteredCount, onFilterChange }) {
 
             <span className="filter-bar__count">
                 {hasFilters
-                    ? `${filteredCount} / ${totalCount} gói`
-                    : `${totalCount} gói`}
+                    ? `${filteredCount} / ${totalCount} packets`
+                    : `${totalCount} packets`}
             </span>
         </div>
     );

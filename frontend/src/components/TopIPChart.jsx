@@ -20,7 +20,7 @@ const TopIPChart = memo(function TopIPChart({ data, dnsMap = {} }) {
                     paddingTop: '40px',
                 }}
             >
-                Chưa có dữ liệu
+                No data available
             </div>
         );
     }
@@ -75,7 +75,7 @@ const TopIPChart = memo(function TopIPChart({ data, dnsMap = {} }) {
                     axisLine={{ stroke: '#30363d' }}
                 />
                 <Tooltip
-                    formatter={(value) => [value + ' gói', 'Số gói tin']}
+                    formatter={(value) => [value + ' packets', 'Packet Count']}
                     contentStyle={{
                         background: '#161b22',
                         border: '1px solid #30363d',

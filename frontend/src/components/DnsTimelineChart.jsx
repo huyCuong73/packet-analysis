@@ -20,10 +20,10 @@ const DnsTimelineChart = memo(function DnsTimelineChart({ data = [] }) {
             }}>
                 <Search size={24} color="#8b949e" />
                 <br />
-                Chưa có truy vấn DNS nào...
+                No DNS queries yet...
                 <br />
                 <span style={{ fontSize: '10px', color: '#484f58' }}>
-                    Hãy mở trình duyệt và truy cập một trang web
+                    Open a browser and visit a website
                 </span>
             </div>
         )
@@ -44,9 +44,9 @@ const DnsTimelineChart = memo(function DnsTimelineChart({ data = [] }) {
                         background: '#0d1117',
                         zIndex: 1,
                     }}>
-                        <th style={thStyle}><div style={{display:'flex', alignItems:'center', gap:'4px'}}><Clock size={12}/> Thời gian</div></th>
-                        <th style={thStyle}><div style={{display:'flex', alignItems:'center', gap:'4px'}}><Activity size={12}/> IP Nguồn</div></th>
-                        <th style={thStyle}><div style={{display:'flex', alignItems:'center', gap:'4px'}}><Globe size={12}/> Tên miền truy vấn</div></th>
+                        <th style={thStyle}><div style={{display:'flex', alignItems:'center', gap:'4px'}}><Clock size={12}/> Time</div></th>
+                        <th style={thStyle}><div style={{display:'flex', alignItems:'center', gap:'4px'}}><Activity size={12}/> Source IP</div></th>
+                        <th style={thStyle}><div style={{display:'flex', alignItems:'center', gap:'4px'}}><Globe size={12}/> Queried Domain</div></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -69,7 +69,7 @@ const DnsTimelineChart = memo(function DnsTimelineChart({ data = [] }) {
                             <td style={{ ...tdStyle, color: '#e6edf3' }}>
                                 <span  
                                     style={{ cursor: 'pointer' }}
-                                    title="Click để copy tên miền"
+                                    title="Click to copy domain"
                                     onClick={() => {
                                         if (navigator.clipboard) {
                                             navigator.clipboard.writeText(entry.domain)

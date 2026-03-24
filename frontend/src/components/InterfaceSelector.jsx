@@ -2,7 +2,7 @@ function InterfaceSelector({ interfaces, value, onChange, disabled, loading }) {
     if (loading) {
         return (
             <span style={{ color: '#8b949e', fontSize: '12px' }}>
-                ⏳ Đang tải...
+                ⏳ Loading...
             </span>
         );
     }
@@ -13,7 +13,7 @@ function InterfaceSelector({ interfaces, value, onChange, disabled, loading }) {
             value={value}
             onChange={(e) => onChange(e.target.value)}
             disabled={disabled}
-            title="Chọn interface mạng"
+            title="Select network interface"
         >
             <option value="auto">🔀 Auto</option>
 

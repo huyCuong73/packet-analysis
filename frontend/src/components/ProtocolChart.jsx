@@ -28,7 +28,7 @@ const ProtocolChart = memo(function ProtocolChart({ data }) {
                     paddingTop: '40px',
                 }}
             >
-                Chưa có dữ liệu
+                No data available
             </div>
         );
     }
@@ -59,7 +59,7 @@ const ProtocolChart = memo(function ProtocolChart({ data }) {
                     ))}
                 </Pie>
                 <Tooltip
-                    formatter={(value, name) => [value + ' gói', name]}
+                    formatter={(value, name) => [value + ' packets', name]}
                     contentStyle={{
                         background: '#161b22',
                         border: '1px solid #30363d',

@@ -17,7 +17,7 @@ export function useStats(isCapturing) {
             setTopIPs(ips.data);
             setTimeStats(time.data);
         } catch (err) {
-            console.error('Lỗi khi lấy stats:', err);
+            console.error('Error fetching stats:', err);
         }
     };
 

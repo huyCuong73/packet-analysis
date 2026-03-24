@@ -26,7 +26,7 @@ function Alerts() {
             <div className="alerts-page">
                 <div style={{ marginBottom: '16px' }}>
                     <h2 style={{ fontSize: '16px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <Bell size={18} color="#f85149" /> Cảnh báo bảo mật
+                        <Bell size={18} color="#f85149" /> Security Alerts
                     </h2>
                     <p
                         style={{
@@ -35,7 +35,7 @@ function Alerts() {
                             marginTop: '4px',
                         }}
                     >
-                        Các sự kiện đáng ngờ được phát hiện trong phiên capture
+                        Suspicious events detected in the capture session
                     </p>
                 </div>
 
@@ -48,9 +48,9 @@ function Alerts() {
                         <div className="empty-state__icon">
                             <CheckCircle size={40} color="#3fb950" />
                         </div>
-                        <div>Không có cảnh báo nào</div>
+                        <div>No alerts found</div>
                         <div className="empty-state__text">
-                            Hệ thống đang hoạt động bình thường
+                            System is operating normally
                         </div>
                     </div>
                 ) : (

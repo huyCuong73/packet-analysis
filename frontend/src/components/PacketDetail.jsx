@@ -32,17 +32,17 @@ function PacketDetail({ packetId }) {
         <div className="detail-panel">
             <div className="detail-panel__title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 {loading
-                    ? <><Loader size={18} className="spin" /> Đang tải...</>
+                    ? <><Loader size={18} className="spin" /> Loading...</>
                     : hasData
-                      ? <><Package size={18} /> Chi tiết gói tin #{packetId} — {detail.summary}</>
-                      : <><Package size={18} /> Chi tiết gói tin</>}
+                      ? <><Package size={18} /> Packet Details #{packetId} — {detail.summary}</>
+                      : <><Package size={18} /> Packet Details</>}
             </div>
 
             <div className="detail-panel__content">
               
                 {!hasData && !loading && (
                     <div className="detail-panel__placeholder">
-                        Click vào 1 gói tin để xem chi tiết
+                        Click a packet to view details
                     </div>
                 )}
 
@@ -60,9 +60,9 @@ function PacketDetail({ packetId }) {
                 {hasData && (
                     <>
                     {eth.src_mac && (
-                        <DetailSection title="Ethernet Header (Tầng liên kết dữ liệu)">
-                            <DetailField label="MAC nguồn" value={eth.src_mac} />
-                            <DetailField label="MAC đích" value={eth.dst_mac} />
+                        <DetailSection title="Ethernet Header (Data Link Layer)">
+                            <DetailField label="Source MAC" value={eth.src_mac} />
+                            <DetailField label="Destination MAC" value={eth.dst_mac} />
                             <DetailField
                                 label="EtherType"
                                 value={`${eth.ethertype} (${eth.ethertype_name})`}
@@ -71,8 +71,8 @@ function PacketDetail({ packetId }) {
                     )}
 
                     {ip.src_ip && (
-                        <DetailSection title="IP Header (Tầng mạng)">
-                            <DetailField label="Phiên bản" value={`IPv${ip.version}`} />
+                        <DetailSection title="IP Header (Network Layer)">
+                            <DetailField label="Version" value={`IPv${ip.version}`} />
                             <DetailField
                                 label="Header Length"
                                 value={`${ip.ihl} bytes`}
@@ -91,17 +91,17 @@ function PacketDetail({ packetId }) {
                                 value={`${ip.protocol} (${ip.protocol_name})`}
                             />
                             <DetailField label="Checksum" value={ip.checksum} />
-                            <DetailField label="IP nguồn" value={ip.src_ip} />
-                            <DetailField label="IP đích" value={ip.dst_ip} />
+                            <DetailField label="Source IP" value={ip.src_ip} />
+                            <DetailField label="Destination IP" value={ip.dst_ip} />
                             <DetailField label="Type of Service" value={ip.tos} />
                         </DetailSection>
                     )}
 
                     {detail.transport_proto === 'TCP' && tr.src_port && (
-                        <DetailSection title="TCP Header (Tầng vận chuyển)">
-                            <DetailField label="Cổng nguồn" value={tr.src_port} />
+                        <DetailSection title="TCP Header (Transport Layer)">
+                            <DetailField label="Source Port" value={tr.src_port} />
                             <DetailField
-                                label="Cổng đích"
+                                label="Destination Port"
                                 value={`${tr.dst_port} (${tr.service})`}
                             />
                             <DetailField label="Sequence Number" value={tr.seq} />
@@ -127,10 +127,10 @@ function PacketDetail({ packetId }) {
                     )}
 
                     {detail.transport_proto === 'UDP' && tr.src_port && (
-                        <DetailSection title="UDP Header (Tầng vận chuyển)">
-                            <DetailField label="Cổng nguồn" value={tr.src_port} />
+                        <DetailSection title="UDP Header (Transport Layer)">
+                            <DetailField label="Source Port" value={tr.src_port} />
                             <DetailField
-                                label="Cổng đích"
+                                label="Destination Port"
                                 value={`${tr.dst_port} (${tr.service})`}
                             />
                             <DetailField label="Length" value={`${tr.length} bytes`} />
@@ -139,8 +139,8 @@ function PacketDetail({ packetId }) {
                     )}
 
                     {app.dns && (
-                        <DetailSection title="DNS (Tầng ứng dụng)">
-                            <DetailField label="Loại" value={app.dns.type} />
+                        <DetailSection title="DNS (Application Layer)">
+                            <DetailField label="Type" value={app.dns.type} />
                             <DetailField label="Transaction" value={app.dns.tx_id} />
                             {app.dns.queries?.map((q, i) => (
                                 <DetailField
@@ -152,7 +152,7 @@ function PacketDetail({ packetId }) {
                             ))}
                             {app.dns.is_suspicious && (
                                 <DetailField
-                                    label={<span style={{display: 'flex', alignItems: 'center', gap: '4px'}}><AlertTriangle size={14} /> Cảnh báo</span>}
+                                    label={<span style={{display: 'flex', alignItems: 'center', gap: '4px'}}><AlertTriangle size={14} /> Warning</span>}
                                     value={app.dns.suspicious_reason}
                                     highlight="danger"
                                 />
@@ -161,7 +161,7 @@ function PacketDetail({ packetId }) {
                     )}
 
                     {app.http && (
-                        <DetailSection title="HTTP (Tầng ứng dụng)">
+                        <DetailSection title="HTTP (Application Layer)">
                             {app.http.direction === 'request' ? (
                                 <>
                                     <DetailField

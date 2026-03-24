@@ -22,7 +22,7 @@ function Sessions() {
     }, []);
 
     const handleDelete = async (id) => {
-        if (!window.confirm('Xóa phiên này?')) return;
+        if (!window.confirm('Delete this session?')) return;
         await axios.delete(`http://localhost:5000/api/sessions/${id}`);
         fetchSessions();
     };
@@ -36,7 +36,7 @@ function Sessions() {
             <div className="sessions-page">
                 <div style={{ marginBottom: '16px' }}>
                     <h2 style={{ fontSize: '16px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <FileText size={18} /> Lịch sử phiên capture
+                        <FileText size={18} /> Capture Session History
                     </h2>
                     <p
                         style={{
@@ -45,7 +45,7 @@ function Sessions() {
                             marginTop: '4px',
                         }}
                     >
-                        Xem lại dữ liệu của các phiên bắt gói tin trước đó
+                        Review data from previous capture sessions
                     </p>
                 </div>
 
@@ -63,10 +63,10 @@ function Sessions() {
                     >
                         <div style={{ fontSize: '40px' }}><Inbox size={48} strokeWidth={1} /></div>
                         <div style={{ marginTop: '12px' }}>
-                            Chưa có phiên nào
+                            No sessions yet
                         </div>
                         <div style={{ fontSize: '12px', marginTop: '4px' }}>
-                            Nhấn "Bắt đầu" ở Dashboard để tạo phiên đầu tiên
+                            Click "Start" on Dashboard to create the first session
                         </div>
                     </div>
                 ) : (
@@ -83,7 +83,7 @@ function Sessions() {
                                 </div>
 
                                 <span className="session-card__count">
-                                    {s.packet_count} gói tin
+                                    {s.packet_count} packets
                                 </span>
 
                                 <div className="session-card__actions">
@@ -92,14 +92,14 @@ function Sessions() {
                                         onClick={() => handleView(s.id)}
                                         style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '4px 12px', fontSize: '12px' }}
                                     >
-                                        <Eye size={12} /> Xem
+                                        <Eye size={12} /> View
                                     </button>
                                     <button
                                         className="btn btn--stop"
                                         onClick={() => handleDelete(s.id)}
                                         style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '4px 12px', fontSize: '12px' }}
                                     >
-                                        <Trash2 size={12} /> Xóa
+                                        <Trash2 size={12} /> Delete
                                     </button>
                                 </div>
                             </div>

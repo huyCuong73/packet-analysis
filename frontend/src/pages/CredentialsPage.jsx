@@ -47,11 +47,10 @@ function CredentialsPage({ socket }) {
                     alignItems: 'center',
                     gap: '8px'
                 }}>
-                    Báo cáo Rò rỉ Thông tin Đăng nhập
+                    Credential Leak Report
                 </h2>
                 <p style={{ color: '#8b949e', fontSize: '13px', marginTop: '6px' }}>
-                    Danh sách các tài khoản (Username/Password) bị đánh cắp do hệ thống phát hiện chúng được truyền đi
-                    trên mạng mà không có mã hóa (HTTP, FTP, Telnet).
+                    List of compromised accounts (Username/Password) detected being transmitted over the network without encryption (HTTP, FTP, Telnet).
                 </p>
             </div>
 
@@ -69,15 +68,15 @@ function CredentialsPage({ socket }) {
             }}>
                 <div style={{ display: 'flex', gap: '24px' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                        <span style={{ color: '#8b949e', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Tổng số sự cố</span>
+                        <span style={{ color: '#8b949e', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Total Incidents</span>
                         <span style={{ color: '#f85149', fontSize: '20px', fontWeight: 700 }}>{stats.total}</span>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                        <span style={{ color: '#8b949e', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Thiết bị bị hại (IP Nguồn)</span>
+                        <span style={{ color: '#8b949e', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Victim Device (Source IP)</span>
                         <span style={{ color: '#58a6ff', fontSize: '20px', fontWeight: 700 }}>{stats.uniqueSrc}</span>
                     </div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                        <span style={{ color: '#8b949e', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Máy chủ lộ lọt (IP Đích)</span>
+                        <span style={{ color: '#8b949e', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Leaked Server (Destination IP)</span>
                         <span style={{ color: '#e3b341', fontSize: '20px', fontWeight: 700 }}>{stats.uniqueDst}</span>
                     </div>
                 </div>
@@ -88,7 +87,7 @@ function CredentialsPage({ socket }) {
                     </div>
                     <input
                         type="text"
-                        placeholder="Tìm kiếm IP, Username, Password..."
+                        placeholder="Search IP, Username, Password..."
                         value={filterText}
                         onChange={(e) => setFilterText(e.target.value)}
                         style={{
@@ -122,10 +121,10 @@ function CredentialsPage({ socket }) {
                     justifyContent: 'space-between',
                     alignItems: 'center'
                 }}>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><FileText size={16} /> Chi tiết các vụ rò rỉ</span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><FileText size={16} /> Leak Details</span>
                     {filterText && (
                         <span style={{ color: '#8b949e', fontSize: '11px', fontWeight: 400 }}>
-                            Đã lọc: <strong>{filteredList.length}</strong> / {credentialsList.length}
+                            Filtered: <strong>{filteredList.length}</strong> / {credentialsList.length}
                         </span>
                     )}
                 </div>

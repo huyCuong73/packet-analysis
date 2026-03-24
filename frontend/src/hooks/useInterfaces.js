@@ -16,7 +16,7 @@ export function useInterfaces() {
 
             setSelectedInterface('auto');
         } catch (err) {
-            console.error('Lỗi lấy interfaces:', err);
+            console.error('Error fetching interfaces:', err);
         } finally {
             setLoading(false);
         }

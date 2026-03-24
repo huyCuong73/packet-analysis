@@ -32,6 +32,13 @@ function _secondsToTime(sec) {
     return `${h}:${m}:${s}`
 }
 
+const DOMAIN_COLORS = [
+    '#58a6ff', '#3fb950', '#d2a8ff', '#f0883e', '#e3b341',
+    '#f778ba', '#79c0ff', '#56d364', '#bc8cff', '#d29922',
+    '#ff7b72', '#7ee787', '#a5d6ff', '#ffa657', '#d4a72c',
+    '#db61a2', '#388bfd', '#2ea043', '#8b5cf6', '#e09b13',
+]
+
 function DnsTimeline({ socket }) {
     const { packets } = socket
     
@@ -105,11 +112,10 @@ function DnsTimeline({ socket }) {
         <div className="page-content" style={{ padding: '16px' }}>
             <div style={{ marginBottom: '16px' }}>
                 <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#e6edf3', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <Search size={22} color="#58a6ff" /> Dòng Thời gian Truy vấn DNS
+                    <Search size={22} color="#58a6ff" /> DNS Query Timeline
                 </h2>
                 <p style={{ color: '#8b949e', fontSize: '12px', marginTop: '4px' }}>
-                    Mỗi chấm trên biểu đồ là một lần máy tính hỏi đường (DNS Query).
-                    Phát hiện phần mềm nào đang ngầm liên lạc Internet sau lưng bạn.
+                    Each dot represents a DNS query. Discover which software is silently communicating with the Internet in the background.
                 </p>
             </div>
 
@@ -126,7 +132,7 @@ function DnsTimeline({ socket }) {
                     </div>
                     <input
                         type="text"
-                        placeholder="Lọc tên miền hoặc IP..."
+                        placeholder="Filter domain or IP..."
                         value={filterText}
                         onChange={(e) => setFilterText(e.target.value)}
                         style={{
@@ -143,11 +149,11 @@ function DnsTimeline({ socket }) {
                     />
                 </div>
                 <span style={{ color: '#8b949e', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <BarChart2 size={14} strokeWidth={2.5} /> {filteredEntries.length} truy vấn DNS
-                    {filterText && ` (tìm thấy từ ${dnsEntries.length} tổng)`}
+                    <BarChart2 size={14} strokeWidth={2.5} /> {filteredEntries.length} DNS queries
+                    {filterText && ` (found from ${dnsEntries.length} total)`}
                 </span>
                 <span style={{ color: '#58a6ff', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    <Globe size={14} strokeWidth={2.5} /> {rootDomainList.length} tên miền gốc
+                    <Globe size={14} strokeWidth={2.5} /> {rootDomainList.length} root domains
                 </span>
             </div>
 
@@ -167,7 +173,7 @@ function DnsTimeline({ socket }) {
                     alignItems: 'center',
                     gap: '6px'
                 }}>
-                    <LineChart size={16} color="#d2a8ff" /> Biểu đồ phân tán DNS theo thời gian
+                    <LineChart size={16} color="#d2a8ff" /> DNS Scatter Plot over Time
                 </div>
 
                 {scatterData.length === 0 ? (
@@ -191,7 +197,7 @@ function DnsTimeline({ socket }) {
                                 tickFormatter={_secondsToTime}
                                 tick={{ fill: '#8b949e', fontSize: 10 }}
                                 axisLine={{ stroke: '#30363d' }}
-                                name="Thời gian"
+                                name="Time"
                             />
                             <YAxis
                                 type="number"
@@ -205,7 +211,7 @@ function DnsTimeline({ socket }) {
                                 width={140}
                                 tick={{ fill: '#e6edf3', fontSize: 10, fontFamily: 'monospace' }}
                                 axisLine={{ stroke: '#30363d' }}
-                                name="Tên miền"
+                                name="Domain"
                             />
                             <Tooltip
                                 content={({ active, payload }) => {
@@ -272,12 +278,12 @@ function DnsTimeline({ socket }) {
                         alignItems: 'center',
                         gap: '6px'
                     }}>
-                        <Trophy size={14} color="#e3b341" /> Tần suất truy vấn
+                        <Trophy size={14} color="#e3b341" /> Query Frequency
                     </div>
-
+                    
                     {domainStats.length === 0 ? (
                         <div style={{ color: '#8b949e', fontSize: '11px', textAlign: 'center', padding: '20px' }}>
-                            Chưa có dữ liệu
+                            No data available
                         </div>
                     ) : (
                         domainStats.map((item, idx) => (
@@ -348,7 +354,7 @@ function DnsTimeline({ socket }) {
                         alignItems: 'center',
                         gap: '6px'
                     }}>
-                        <FileText size={14} color="#8b949e" /> Chi tiết từng truy vấn
+                        <FileText size={14} color="#8b949e" /> Query Details
                     </div>
 
                     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px', fontFamily: 'monospace' }}>
@@ -359,10 +365,10 @@ function DnsTimeline({ socket }) {
                                 background: '#0d1117',
                                 zIndex: 1,
                             }}>
-                                <th style={thStyle}><div style={{display:'flex', alignItems:'center', gap:'4px'}}><Clock size={12}/> Thời gian</div></th>
-                                <th style={thStyle}><div style={{display:'flex', alignItems:'center', gap:'4px'}}><Activity size={12}/> IP Nguồn</div></th>
-                                <th style={thStyle}><div style={{display:'flex', alignItems:'center', gap:'4px'}}><Globe size={12}/> Tên miền truy vấn</div></th>
-                                <th style={thStyle}><div style={{display:'flex', alignItems:'center', gap:'4px'}}><Tag size={12}/> Domain gốc</div></th>
+                                <th style={thStyle}><div style={{display:'flex', alignItems:'center', gap:'4px'}}><Clock size={12}/> Time</div></th>
+                                <th style={thStyle}><div style={{display:'flex', alignItems:'center', gap:'4px'}}><Activity size={12}/> Source IP</div></th>
+                                <th style={thStyle}><div style={{display:'flex', alignItems:'center', gap:'4px'}}><Globe size={12}/> Queried Domain</div></th>
+                                <th style={thStyle}><div style={{display:'flex', alignItems:'center', gap:'4px'}}><Tag size={12}/> Root Domain</div></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -382,7 +388,7 @@ function DnsTimeline({ socket }) {
                                     <td style={{ ...tdStyle, color: '#e6edf3' }}>
                                         <span
                                             style={{ cursor: 'pointer', display:'flex', alignItems:'center', gap:'6px' }}
-                                            title="Click để copy"
+                                            title="Click to copy"
                                             onClick={() => handleCopy(e.domain)}
                                         >
                                             {e.domain}

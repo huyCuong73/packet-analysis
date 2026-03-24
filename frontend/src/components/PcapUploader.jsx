@@ -13,7 +13,7 @@ function PcapUploader({ onLoaded }) {
         if (!file) return;
 
         if (!file.name.endsWith('.pcap') && !file.name.endsWith('.pcapng')) {
-            setError('Chỉ hỗ trợ file .pcap hoặc .pcapng');
+            setError('Only .pcap or .pcapng files are supported');
             return;
         }
 
@@ -40,7 +40,7 @@ function PcapUploader({ onLoaded }) {
                 total: res.data.total_packets,
             });
         } catch (err) {
-            setError(err.response?.data?.error || 'Lỗi khi xử lý file');
+            setError(err.response?.data?.error || 'Error processing file');
         } finally {
             setIsLoading(false);
             setTimeout(() => setProgress(0), 1000);
@@ -71,10 +71,10 @@ function PcapUploader({ onLoaded }) {
                 </div>
                 <div className="upload-zone__text">
                     {isLoading
-                        ? 'Đang xử lý file...'
-                        : 'Kéo thả file .pcap vào đây hoặc click để chọn'}
+                        ? 'Processing file...'
+                        : 'Drag and drop a .pcap file here or click to select'}
                 </div>
-                <div className="upload-zone__hint">Hỗ trợ định dạng: .pcap</div>
+                <div className="upload-zone__hint">Supported format: .pcap</div>
 
                 <input
                     ref={inputRef}

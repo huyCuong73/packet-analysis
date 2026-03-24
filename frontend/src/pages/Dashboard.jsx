@@ -171,8 +171,8 @@ function Dashboard({ socket }) {
 							gap: '6px'
 						}}
 					>
-						<FolderOpen size={16} /> Đang xem: <strong>{pcapSessionName}</strong> —{' '}
-						{pcapPackets.length} gói tin
+						<FolderOpen size={16} /> Viewing: <strong>{pcapSessionName}</strong> —{' '}
+						{pcapPackets.length} packets
 					</div>
 				)}
 				{viewSessionId && (
@@ -189,7 +189,7 @@ function Dashboard({ socket }) {
 							gap: '6px'
 						}}
 					>
-						<Eye size={16} /> Đang xem lại phiên #{viewSessionId}— dữ liệu chỉ đọc
+						<Eye size={16} /> Reviewing session #{viewSessionId} — read-only data
 					</div>
 				)}
 
@@ -203,7 +203,7 @@ function Dashboard({ socket }) {
 								fontWeight: 400,
 								marginLeft: '6px'
 							}}>
-								(băng thông tích lũy)
+								(cumulative bandwidth)
 							</span>
 						</div>
 						<BandwidthChart data={topTalkers} dnsMap={dnsMap} />
@@ -218,16 +218,16 @@ function Dashboard({ socket }) {
 					</div>
 					<div className="chart-card">
 						<div className="chart-card__title" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-							<LineChart size={16} color="#e3b341" /> Traffic theo thời gian
+							<LineChart size={16} color="#e3b341" /> Traffic over time
 						</div>
 						<TimeChart data={timeStats} />
 					</div>
 					<div className="chart-card">
-						<div className="chart-card__title" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Home size={16} color="#ffa657" /> Nội bộ vs Internet</div>
+						<div className="chart-card__title" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Home size={16} color="#ffa657" /> Internal vs Internet</div>
 						<TrafficLocationChart data={trafficLocation} />
 					</div>
 					<div className="chart-card">
-						<div className="chart-card__title" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Activity size={16} color="#f85149" /> Hoạt động Port theo thời gian</div>
+						<div className="chart-card__title" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><Activity size={16} color="#f85149" /> Port Activity over time</div>
 						<PortActivityChart data={portActivity} />
 					</div>
 				</div>

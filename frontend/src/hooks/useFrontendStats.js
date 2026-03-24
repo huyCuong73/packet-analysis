@@ -72,7 +72,7 @@ export function useFrontendStats(packets) {
         })
 
         return [
-            { name: 'Mạng LAN',    value: counts.lan,       color: '#3fb950' },
+            { name: 'LAN',    value: counts.lan,       color: '#3fb950' },
             { name: 'Internet',     value: counts.internet,  color: '#58a6ff' },
             { name: 'Multicast',    value: counts.multicast, color: '#8b949e' },
         ].filter(d => d.value > 0)

@@ -19,7 +19,7 @@ const TimeChart = memo(function TimeChart({ data }) {
                     paddingTop: '40px',
                 }}
             >
-                Chưa có dữ liệu
+                No data available
             </div>
         );
     }
@@ -40,7 +40,7 @@ const TimeChart = memo(function TimeChart({ data }) {
                     width={30}
                 />
                 <Tooltip
-                    formatter={(value) => [value + ' gói', 'Số gói tin']}
+                    formatter={(value) => [value + ' packets', 'Packet Count']}
                     contentStyle={{
                         background: '#161b22',
                         border: '1px solid #30363d',
